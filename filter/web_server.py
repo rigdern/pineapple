@@ -1,158 +1,93 @@
-import BaseHTTPServer, urllib2, socket, select
+import BaseHTTPServer
 
-unblocked = set()
+# Changes to the hosts file don't seem to be recoginzed right away. Maybe we
+# should act as a proxy server instead of frequently modifying the hosts file.
+# Twisted looks promising.
+
+# XXX Path to hosts file should depend on the operating system
+def read_hosts():
+  hosts = {}
+  for line in open('/etc/hosts').readlines():
+    if '#' in line:
+      line = line[:line.index('#')]
+    parts = line.split()
+    if len(parts) == 2:
+      addrs = hosts.setdefault(parts[1], set())
+      addrs.add(parts[0])
+  return hosts
+
+def write_hosts(hosts):
+  fp = open('/etc/hosts', 'w')
+  for name, addrs in hosts.iteritems():
+    for addr in addrs:
+      fp.write('%s\t%s\n'%(addr, name))
+  fp.close()
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-  def proxy_it(self):
-    host = self.headers['Host']
-    addr = '98.137.149.56'#socket.gethostbyname_ex(host)
-    port = 80
-    
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((addr, port))
-    
-    req = "%s %s %s\r\n"%(self.command, self.path, self.request_version)
-    s.send(req)
-    for key, value in self.headers.items():
-      header = '%s: %s\r\n'%(key, value)
-      s.send(header)
-    s.send('\r\n')
-    
-    read_files = [s, self.rfile]
-    write_files = []
-    error_files = read_files
-    print 'piping...'
-    while 1:
-      ins, _, errs = select.select(read_files, write_files, error_files, 3.0)
-      if not ins and not errs:
-        break
-      
-      for f in errs:
-        print 'Exception', f
-      
-      for in_file in ins:
-        if in_file == self.rfile:
-          out = s
-        else:
-          out = self.wfile
-        if hasattr(in_file, 'recv'): data = in_file.recv(1024)
-        else: data = in_file.read(1024)
-        if data:
-          if hasattr(out, 'send'): out.send(data)
-          else: out.write(data)
-        else:
-          break
-    print 'Connection CLOSED'
-    s.close()
-    self.wfile.close()
-    self.rfile.close()
-  
-  def proxy_it_good(self):
-    host = self.headers['Host']
-    addr = '98.137.149.56'#socket.gethostbyname_ex(host)
-    port = 80
-    
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((addr, port))
-    
-    req = "%s %s %s\r\n"%(self.command, self.path, self.request_version)
-    s.send(req)
-    print req
-    for h in self.headers:
-      header = '%s: %s\r\n'%(h.title(), self.headers[h])
-      s.send(header)
-    s.send('\r\n')
-    
-    while 1:
-      r, w, x = select.select([s, self.rfile], [], [s, self.rfile])
-      for a in x:
-        print 'Exception', a
-      if self.rfile in r:
-        print 'data from CLIENT'
-        data = self.rfile.read(1024)
-        if len(data) == 0:
-          self.rfile.close()
-          self.wfile.close()
-          s.close()
-          print 'CLOSED via CLIENT'
-          break
-        print 'GOT IT: [%s]'%data
-        s.sendall(data)
-      if s in r:
-        print 'data from SERVER'
-        data = s.recv(1024)
-        if len(data) == 0:
-          s.close()
-          self.rfile.close()
-          self.wfile.close()
-          print 'CLOSED via SERVER'
-          break
-        print 'GOT IT: [%s]'%data
-        self.wfile.write(data)
-    
-  def proxy_it2(self):
-    host = self.headers['Host']
-    addr = '98.137.149.56'#socket.gethostbyname_ex(host)
-    port = 80
-    
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((addr, port))
-    
-    req = "%s %s %s\r\n"%(self.command, self.path, self.request_version)
-    s.send(req)
-    print req
-    for h in self.headers:
-      continue
-      print 'HEADER: [%s: %s]'%(string.capwords(h, '-'), self.headers[h])
-      s.send('%s: %s\r\n'%(string.capwords(h, '-'), self.headers[h]))
-    s.send('\r\n')
-    print 'receiving...'
-    buf = ''
-    while 1:
-      data = s.recv(1024)
-      if len(data) == 0: break
-      buf += data
-    print 'got: [%s]'%buf
-    s.close()
-    print 'sending to client'
-    self.send_response(200)
-    self.wfile.write(buf)
-    self.wfile.close()
-  
   def do_GET(self):
-    if self.headers['Host'] == '127.0.0.1':
+    global hosts
+    
+    host = self.headers['Host']
+    
+    if host == '127.0.0.1':
       self.send_response(200)
       self.send_header("Content-type", "text/html")
       self.end_headers()
       url = self.path[1:]
+      del hosts[url]
+      write_hosts(hosts)
+      print 'Unblocked [%s]'%url
       self.wfile.write('unblocked [%s]'%url)
-      unblocked.add(url)
+      self.wfile.close()
     else:
-      self.proxy_it()
-      return
       self.send_response(200)
       self.send_header("Content-type", "text/html")
       self.end_headers()
-      url = 'http://' + self.headers['Host'] + self.path
-      self.wfile.write('<a href="%s">%s</a>'%(url, url))
-      print self.path
-      #print 'HOST --', self.headers['Host']
-      print 'HOST'
-      print self.headers
-      print '-'*20
-      print 'DATA'
-      #print self.rfile.closed
-      print 'here they come!'
-      print 'line: [%s]'%(self.rfile.read(int(self.headers['Content-Length'])))
-      print
-      print '-'*20
-      print
+      url = 'http://' + host + self.path
+      # XXX The HTML shouldn't be hardcoded in here. It should be in a separate
+      #     file. If we need to use too much Python to generate the HTML, perhaps
+      #     we should look into a templating system.
+      content = """
+<html>
+<head>
+  <title>Blocked</title>
+  <script language="JavaScript">
+  <!--
+    function unblock(host)
+    {
+      var req = new XMLHttpRequest();
+      req.open("GET", "http://127.0.0.1/" + host, true);
+      req.onreadystatechange = function (aEvt) {
+        if (req.readyState == 4)
+          location.reload(true);
+      }
+      req.send(null);
+    }
+  -->
+  </script>
+</head>
+<body>
+Denied! You cannot access %s.
+<br><br>
+Click <a href="javascript:unblock('%s')">here</a> to access it.<br><br>
+</body>
+</html>
+"""
+      self.wfile.write(content%(url, host))
+      self.wfile.close()
 
   do_POST = do_GET
+
+# XXX We should have a better way to deal with the hosts file.
+orig_hosts = read_hosts()
+hosts = read_hosts()
 
 print 'starting'
 addr = ('127.0.0.1', 80)
 httpd = BaseHTTPServer.HTTPServer(addr, RequestHandler)
 print 'forever'
-httpd.serve_forever()
+try:
+  httpd.serve_forever()
+finally:
+  write_hosts(orig_hosts)
 print 'done'
