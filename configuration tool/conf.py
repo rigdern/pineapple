@@ -119,40 +119,55 @@ def loadRoleModel():
 		print "error"
 	
 	
+def setRoleName():
+	global eRoleName
+	roleName= eRoleName.get()
+	
 def myRoleWindow():
-	global imageFile, tbQuotes, top, lbRolePrev
+	global imageFile, tbQuotes, top, lbRolePrev, eRoleName, imageName
 	top=Toplevel(root)
 	
-
+	lbRoleMo=Label(top,text="Role Model")
+	lbRoleMo.grid(row=0,column=1)
+	
+	fRoleName=Frame(top)
+	lbRoleName=Label(fRoleName,text="Name")
+	lbRoleName.grid(row=0,column=0)
+	eRoleName=Entry(fRoleName)
+	eRoleName.grid(row=0,column=1)
+	eRoleName.insert(END,imageName)
+	bRoleButton=Button(fRoleName,text="Set Name",command=setRoleName())
+	fRoleName.grid(row=1,column=0,sticky=W)
+	
 	lbPreview=Label(top,text="Preview")
-	lbPreview.grid(row=1,column=0,sticky=W)
+	lbPreview.grid(row=2,column=0,sticky=W)
 	
 	#image1=PhotoImage(file="earth.gif")
 	imageLab=PhotoImage(file=imageFile)
 	if imageLab!=None:
 		lbRolePrev=Label(top, image=imageLab)
-		lbRolePrev.grid(row=2,column=0,sticky=W)
+		lbRolePrev.grid(row=3,column=0,sticky=W)
 	else:
 		print "error"
 	
 	bSetPicture=Button(top,text="Load Picture", command=loadRoleModel)
-	bSetPicture.grid(row=3,column=2)
+	bSetPicture.grid(row=4,column=2)
 	
 	lbQuotes=Label(top,text="Quotes")
-	lbQuotes.grid(row=3,column=0,sticky=W)
+	lbQuotes.grid(row=4,column=0,sticky=W)
 	tbQuotes=Text(top)
-	tbQuotes.grid(row=4,column=0)
+	tbQuotes.grid(row=5,column=0)
 	
 	for i in imageText:
 		j= "\n"+i
 		tbQuotes.insert(END, j)
 	
 	but=Button(top,text="commit",command=rolesCommit)
-	but.grid(row=5,column=0)
+	but.grid(row=6,column=0)
 
 	
 def rolesCommit():	
-	global roleFile,imageText,tbQuotes, imageFile, imageName, top
+	global roleFile,imageText,tbQuotes, imageFile, imageName, top, eRoleName
 	
 	myQuotes=tbQuotes.get(1.0,END)
 	g=0
@@ -163,15 +178,20 @@ def rolesCommit():
 		roleFile=open(ROLE_FILE_NAME,'w')
 		for j in info:
 			i=str(j).rstrip()
-			if i==imageName:
-				g+=1
+			
 				
-			elif g==0:
-				print i
+			
+			if g==0:
 				roleFile.write(i+"\n")
 			elif i=="#":
 				g=0
-				
+			elif i==imageName:
+				g+=1
+			
+		imageName=eRoleName.get()
+		lbRoleModels.insert(END,imageName)
+		myRolesList.append(imageName)
+		
 		roleFile.write(imageName+"\n")
 		roleFile.write(imageFile+"\n")
 		textBox=tbQuotes.get(1.0,END)
@@ -190,7 +210,7 @@ def rolesCommit():
 
 	
 def	roleWindowEDIT():
-	global roleFile,imageText,tbQuotes, imageFile, imageName
+	global roleFile,imageText,tbQuotes, imageFile, imageName, eRoleName
 	
 	mylist=lbRoleModels.curselection()
 	if len(mylist) == 0:
@@ -212,6 +232,8 @@ def	roleWindowEDIT():
 			i=str(j).rstrip()
 			if i == searchVal:
 				imageName=i
+				#eRoleName.delete(0,END)
+				#eRoleName.insert(END)
 				g+=1
 			elif g==1:
 				imageFile=i
@@ -228,10 +250,11 @@ def	roleWindowEDIT():
 		print "error"
 	
 def	roleWindowADD():
-	global imageText, imageFile
+	global imageText, imageFile, imageName
 	imageGrap=0
 	imageText=[]
 	imageFile=""
+	imageName=""
 	myRoleWindow()
 				
 			
