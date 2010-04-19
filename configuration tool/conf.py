@@ -131,6 +131,7 @@ def myRoleWindow():
 	imageLab=PhotoImage(file=imageFile)
 	if imageLab!=None:
 		lbRolePrev=Label(top, image=imageLab)
+		lbRolePrev.image = imageLab
 		lbRolePrev.grid(row=2,column=0,sticky=W)
 	else:
 		print "error"
