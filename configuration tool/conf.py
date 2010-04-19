@@ -13,10 +13,20 @@ TIME_TYPE_DENY_ALWAYS = 0
 TIME_TYPE_ALLOW_BREAKS = 1
 TIME_TYPE_BLOCK_SCHEDULING = 2
 
+DET_TYPE_DENY=0
+DET_TYPE_TYPE=1
+DET_TYPE_ROLES=2
+
+
 mySites=[]
 rbRadios=[]
 picRole=0
 lastselection = None
+myRolesList=[]
+
+ROLE_FILE_NAME="myRoles"
+#roleFile=open(ROLE_FILE_NAME,'w')
+
 
 def removeSite():
 	site=SiteStr.get()
@@ -99,8 +109,157 @@ def list_selection_changed(selection):
 		for allowedtime in breaks:
 			liTime.selection_set(allowedtime)
 
+			
+def loadRoleModel():
+	global lbRolePrev
+	fileM=tkFileDialog.askopenfile(parent=root,mode='rb',title='Choose a file')
+	if fileM!=None:
+		lbRolePrev.config(image=fileM)
+	else:
+		print "error"
+	
+	
+def myRoleWindow():
+	global imageFile, tbQuotes, top, lbRolePrev
+	top=Toplevel(root)
+	
+
+	lbPreview=Label(top,text="Preview")
+	lbPreview.grid(row=1,column=0,sticky=W)
+	
+	#image1=PhotoImage(file="earth.gif")
+	imageLab=PhotoImage(file=imageFile)
+	if imageLab!=None:
+		lbRolePrev=Label(top, image=imageLab)
+		lbRolePrev.grid(row=2,column=0,sticky=W)
+	else:
+		print "error"
+	
+	bSetPicture=Button(top,text="Load Picture", command=loadRoleModel)
+	bSetPicture.grid(row=3,column=2)
+	
+	lbQuotes=Label(top,text="Quotes")
+	lbQuotes.grid(row=3,column=0,sticky=W)
+	tbQuotes=Text(top)
+	tbQuotes.grid(row=4,column=0)
+	
+	for i in imageText:
+		j= "\n"+i
+		tbQuotes.insert(END, j)
+	
+	but=Button(top,text="commit",command=rolesCommit)
+	but.grid(row=5,column=0)
+
+	
+def rolesCommit():	
+	global roleFile,imageText,tbQuotes, imageFile, imageName, top
+	
+	myQuotes=tbQuotes.get(1.0,END)
+	g=0
+	if roleFile!=None:
+		roleFile=open(ROLE_FILE_NAME,'r')
+		info=roleFile.readlines()
+		roleFile.close()
+		roleFile=open(ROLE_FILE_NAME,'w')
+		for j in info:
+			i=str(j).rstrip()
+			if i==imageName:
+				g+=1
+				
+			elif g==0:
+				print i
+				roleFile.write(i+"\n")
+			elif i=="#":
+				g=0
+				
+		roleFile.write(imageName+"\n")
+		roleFile.write(imageFile+"\n")
+		textBox=tbQuotes.get(1.0,END)
+		for n in textBox:
+			roleFile.write(n)
+		roleFile.write("#\n")
+		roleFile.close()
+		roleFile=open(ROLE_FILE_NAME,'r')
+		info=roleFile.readlines()
+		roleFile.close()
+		top.destroy()
+	else:
+		print "error"
+	
+	
+
+	
+def	roleWindowEDIT():
+	global roleFile,imageText,tbQuotes, imageFile, imageName
+	
+	mylist=lbRoleModels.curselection()
+	if len(mylist) == 0:
+		return
+	else:
+		print "Im going!"
+			
+	searchNum=mylist[0]
+	searchVal=myRolesList[int(searchNum)]
+	
+	if roleFile!=None:
+		roleFile=open(ROLE_FILE_NAME,'r')
+		info=roleFile.readlines()
+		roleFile.close()
+		
+		g=0
+		imageText=[]
+		for j in info:
+			i=str(j).rstrip()
+			if i == searchVal:
+				imageName=i
+				g+=1
+			elif g==1:
+				imageFile=i
+				g+=1
+			elif g>1:
+				if i =="#":
+					myRoleWindow()
+					return
+				imageText.append(i)
+				
+		
+		
+	else:
+		print "error"
+	
+def	roleWindowADD():
+	global imageText, imageFile
+	imageGrap=0
+	imageText=[]
+	imageFile=""
+	myRoleWindow()
+				
+			
+def roleListLoad():
+	global roleFile
+	roleFile=open(ROLE_FILE_NAME,'r')
+	if roleFile!=None:
+		info=roleFile.readlines()
+		g=0
+		imageText=[]
+		
+		for j in info:
+			if g== 0:
+				i=str(j).rstrip()
+				lbRoleModels.insert(END,i)
+				myRolesList.append(i)
+				g+=1
+			elif i=="#":
+				g=0
+				
+	roleFile.close()
+			
 def build_layout():
-	global lbSiteList, SiteStr, intTimeType, BreakLengthStr, liTime, root, rbTimeRadios, intListType
+	global lbSiteList, SiteStr, intTimeType, BreakLengthStr
+	global liTime, root, rbTimeRadios, intListType, lbRoleModels
+	global roleName, roleText, roleFile, myRolesList, tbQuotes, imageFile
+	global lbRolePrev
+	
 	root= Tk()
 	menubar = Menu(root)
 
@@ -196,6 +355,41 @@ def build_layout():
 		     "11 pm"]:
 		liTime.insert(END, item)
 
+		
+	
+	#Deterants
+	
+	intDetType=IntVar()
+	intDetType.set(1)
+	
+	lbDet=Label(root,text="Deterants")
+	lbDet.grid(row=0,column=6)
+	fDets=Frame(root)
+	rbDetRadios=[]
+	rbDetRadios.append(Radiobutton(fDets,text="Only Block", variable=intDetType,value=DET_TYPE_DENY))
+	rbDetRadios.append(Radiobutton(fDets,text="Type Deterant", variable=intDetType,value=DET_TYPE_TYPE))
+	rbDetRadios.append(Radiobutton(fDets,text="Role Models", variable=intDetType,value=DET_TYPE_ROLES))
+	
+	rbDetRadios[0].grid(row=0,column=0,sticky=W)
+	rbDetRadios[1].grid(row=1,column=0,sticky=W)
+	rbDetRadios[2].grid(row=2,column=0,sticky=W)
+
+	lbRoleModels= Listbox(fDets)
+	lbRoleModels.grid(row=3,column=0)
+	
+	roleFrame=Frame(fDets)
+	bAddWindow=Button(roleFrame,text="Add New")
+	bAddWindow.config(command=roleWindowADD)
+	bAddWindow.grid(row=0,column=0)
+	bEditWindow=Button(roleFrame,text="Edit Selection")
+	bEditWindow.config(command=roleWindowEDIT)
+	bEditWindow.grid(row=0,column=1)
+	roleFrame.grid(row=4,column=0)
+	
+	fDets.grid(row=2,column=6)
+	
+	
+	roleListLoad()
 
 def main():
 	build_layout()
