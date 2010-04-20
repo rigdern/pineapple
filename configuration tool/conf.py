@@ -13,9 +13,9 @@ TIME_TYPE_DENY_ALWAYS = 0
 TIME_TYPE_ALLOW_BREAKS = 1
 TIME_TYPE_BLOCK_SCHEDULING = 2
 
-DET_TYPE_DENY=0
-DET_TYPE_TYPE=1
-DET_TYPE_ROLES=2
+DET_TYPE_DENY = 0
+DET_TYPE_TYPE = 1
+DET_TYPE_ROLES = 2
 
 
 mySites=[]
@@ -50,9 +50,19 @@ def addSite():
 		siteconfig['BlockConfig']['AllowedTime'] = []
 		for allowed_time in allowed_blocks:
 			siteconfig['BlockConfig']['AllowedTime'].append(allowed_time)
-	print siteconfig
 
 	# TODO deterrents
+	dettype = intDetType.get()
+	siteconfig['Deterrents'] = {}
+	siteconfig['Deterrents']['Method'] = dettype
+	if dettype == DET_TYPE_ROLES:
+		rolemodels = liRole.curselection()
+		siteconfig['Deterrents']['RoleModels'] = []
+		for rowindex in rolemodels:
+			siteconfig['Deterrents']['RoleModels'].append(myRolesList[rowindex]['Name'])
+
+	print siteconfig
+
 	mySites.append(siteconfig)
 	lbSiteList.delete(0,END)
 	for item in mySites:
@@ -151,8 +161,25 @@ def myRoleWindow():
 	but=Button(top,text="commit",command=rolesCommit)
 	but.grid(row=5,column=0)
 
+def commitRoleModelsToFile():
+	fileOpen = open('myRolesPickle', 'wb')
+	if fileOpen != None:
+		pickle.dump(myRolesList, fileOpen)
+		fileOpen.Close()
+
+def rolesCommit(): 
+	global roleFile,imageText,tbQuotes, imageFile, imageName, top
+
+	deterrentconfig = {}
+	deterrentconfig['Name'] = imageName
+	deterrentconfig['ImagePath'] = imageFile
+	deterrentconfig['QuotesList'] = tbQuotes.get(1.0, END)
+	myRolesList.append(deterrentconfig)
+	commitRoleModelsToFile()
+
 	
-def rolesCommit():	
+	
+def rolesCommit_old():	
 	global roleFile,imageText,tbQuotes, imageFile, imageName, top
 	
 	myQuotes=tbQuotes.get(1.0,END)
@@ -259,7 +286,7 @@ def build_layout():
 	global lbSiteList, SiteStr, intTimeType, BreakLengthStr
 	global liTime, root, rbTimeRadios, intListType, lbRoleModels
 	global roleName, roleText, roleFile, myRolesList, tbQuotes, imageFile
-	global lbRolePrev
+	global lbRolePrev, rbDetRadios, intDetType
 	
 	root= Tk()
 	menubar = Menu(root)
@@ -358,19 +385,18 @@ def build_layout():
 
 		
 	
-	#Deterants
+	#Deterrents
 	
 	intDetType=IntVar()
-	intDetType.set(1)
 	
-	lbDet=Label(root,text="Deterants")
+	lbDet=Label(root,text="Deterrents")
 	lbDet.grid(row=0,column=6)
 	fDets=Frame(root)
 	rbDetRadios=[]
 	rbDetRadios.append(Radiobutton(fDets,text="Only Block", variable=intDetType,value=DET_TYPE_DENY))
-	rbDetRadios.append(Radiobutton(fDets,text="Type Deterant", variable=intDetType,value=DET_TYPE_TYPE))
+	rbDetRadios.append(Radiobutton(fDets,text="Type Deterrent", variable=intDetType,value=DET_TYPE_TYPE))
 	rbDetRadios.append(Radiobutton(fDets,text="Role Models", variable=intDetType,value=DET_TYPE_ROLES))
-	
+
 	rbDetRadios[0].grid(row=0,column=0,sticky=W)
 	rbDetRadios[1].grid(row=1,column=0,sticky=W)
 	rbDetRadios[2].grid(row=2,column=0,sticky=W)
@@ -386,10 +412,8 @@ def build_layout():
 	bEditWindow.config(command=roleWindowEDIT)
 	bEditWindow.grid(row=0,column=1)
 	roleFrame.grid(row=4,column=0)
-	
-	fDets.grid(row=2,column=6)
-	
-	
+
+	fDets.grid(row=2,column=6)	
 	roleListLoad()
 
 def main():
@@ -398,21 +422,4 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
-"""
-fDeterance=Frame(root)
-lbDeteranceLable=Label(fDeterance,text="Deterance")
-cbTypeOut=Checkbutton(fDeterance,text="Typing")
-cbTypeOut.grid(row=1, column=0)
-cbRoleModel=Checkbutton(fDeterance,text="Rolemodel")
-cbRoleModel.grid(row=2, column=0)
-bLoadRole=Button(fDeterance, text="Load Image", command=loadRoleModel)
-
-
-image1=PhotoImage()
-panel=Label(fDeterance, image=image1)
-panel.grid(row=5,column=5)
-
-fDeterance.grid(row=0, column=4)
-"""
 
