@@ -78,12 +78,6 @@ def saveFile():
 		print mySites
 		outfile.close()
 		
-def loadRoleModel():
-	fileM=tkFileDialog.askopenfile(parent=root,mode='rb',title='Choose a file')
-	if fileM!=None:
-		picRole.config(file=fileM)
-	else:
-		print "error"
 	
 def poll():
 	global lastselection
@@ -112,9 +106,13 @@ def list_selection_changed(selection):
 			
 def loadRoleModel():
 	global lbRolePrev
-	fileM=tkFileDialog.askopenfile(parent=root,mode='rb',title='Choose a file')
+	fileM=tkFileDialog.askopenfilename(parent=root,title='Choose a file')
+	print fileM
 	if fileM!=None:
-		lbRolePrev.config(image=fileM)
+		myPic=PhotoImage(file=fileM)
+		lbRolePrev.config(image=myPic)
+		lbRolePrev.image = myPic
+		
 	else:
 		print "error"
 	
@@ -146,12 +144,11 @@ def myRoleWindow():
 	imageLab=PhotoImage(file=imageFile)
 	if imageLab!=None:
 		lbRolePrev=Label(top, image=imageLab)
-<<<<<<< HEAD
+
 		lbRolePrev.grid(row=3,column=0,sticky=W)
-=======
+
 		lbRolePrev.image = imageLab
 		lbRolePrev.grid(row=2,column=0,sticky=W)
->>>>>>> 74245f2aed2063b95686fa6462401bc110aebfd5
 	else:
 		print "error"
 	
