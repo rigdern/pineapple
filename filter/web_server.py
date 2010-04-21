@@ -3,6 +3,7 @@ import BaseHTTPServer
 # Changes to the hosts file don't seem to be recoginzed right away. Maybe we
 # should act as a proxy server instead of frequently modifying the hosts file.
 # Twisted looks promising.
+# Make multithreaded so it can handle multiple connections simultaneously.
 
 # XXX Path to hosts file should depend on the operating system
 def read_hosts():
