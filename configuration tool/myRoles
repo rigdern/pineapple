@@ -1,8 +1,33 @@
-earth
-earth.gif
-not made of cheese
-#
-hi
-
-hi
-#
+(lp0
+(dp1
+S'QuotesList'
+p2
+(lp3
+Vquote 1
+p4
+aVquote 2
+p5
+asS'ImagePath'
+p6
+VC:/Users/elc/Desktop/configuration tool/earth.gif
+p7
+sS'Name'
+p8
+S'Earth'
+p9
+sa(dp10
+g2
+(lp11
+VChange.
+p12
+aVHope.
+p13
+aVFree Healthcare.
+p14
+asg6
+VC:/Users/elc/Desktop/obama.gif
+p15
+sg8
+S'Barack Obama'
+p16
+sa.

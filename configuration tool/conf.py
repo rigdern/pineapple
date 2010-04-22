@@ -56,10 +56,12 @@ def addSite():
 	siteconfig['Deterrents'] = {}
 	siteconfig['Deterrents']['Method'] = dettype
 	if dettype == DET_TYPE_ROLES:
-		rolemodels = liRole.curselection()
-		siteconfig['Deterrents']['RoleModels'] = []
-		for rowindex in rolemodels:
-			siteconfig['Deterrents']['RoleModels'].append(myRolesList[rowindex]['Name'])
+		rowindex = lbRoleModels.curselection()
+		if len(rowindex) != 1:
+			print "error: must select a role model"
+			return
+
+		siteconfig['Deterrents']['RoleModelName'] = myRolesList[int(rowindex[0])]['Name']
 
 	print siteconfig
 
@@ -113,13 +115,41 @@ def list_selection_changed(selection):
 		for allowedtime in breaks:
 			liTime.selection_set(allowedtime)
 
-			
+	deterrentmethod = configobj['Deterrents']['Method']
+	intDetType.set(deterrentmethod)
+	if deterrentmethod == DET_TYPE_ROLES:
+		roleName = configobj['Deterrents']['RoleModelName']
+		for i in range(0, len(myRolesList)):
+			if myRolesList[i]['Name'] == roleName:
+				lbRoleModels.selection_set(i)
+	lookForEdit(None)
+		
+def lookForEdit(event):
+	return
+	prevvalue = SiteStr.get()
+	if event != None:
+		if not event.char.isalnum() and event.char != '.':
+			return
+		SiteStr.insert(prevvalue + event.char)
+
+	isadd = 1
+	for site in mySites:
+		if SiteStr.get() == site['url']:
+			bSite.config(text="Edit Site")
+			isadd = 0
+			break
+	if isadd:
+		bSite.config(text="Add Site")
+		
+
+	return "break"
+
+
 def loadRoleModel():
-	global lbRolePrev
-	fileM=tkFileDialog.askopenfilename(parent=root,title='Choose a file')
-	print fileM
-	if fileM!=None:
-		myPic=PhotoImage(file=fileM)
+	global lbRolePrev, imageFile
+	imageFile=tkFileDialog.askopenfilename(parent=root,title='Choose a file')
+	if imageFile!=None:
+		myPic=PhotoImage(file=imageFile)
 		lbRolePrev.config(image=myPic)
 		lbRolePrev.image = myPic
 		
@@ -132,7 +162,7 @@ def setRoleName():
 	roleName= eRoleName.get()
 	
 def myRoleWindow():
-	global imageFile, tbQuotes, top, lbRolePrev, eRoleName, imageName
+	global imageFile, tbQuotes, top, lbRolePrev, eRoleName, imageName, eRoleName
 	top=Toplevel(root)
 	
 	lbRoleMo=Label(top,text="Role Model")
@@ -171,37 +201,33 @@ def myRoleWindow():
 	tbQuotes.grid(row=5,column=0)
 	
 	for i in imageText:
-		j= "\n"+i
+		j= i+"\n"
 		tbQuotes.insert(END, j)
 	
 	but=Button(top,text="commit",command=rolesCommit)
 	but.grid(row=6,column=0)
 
 def commitRoleModelsToFile():
-	fileOpen = open('myRolesPickle', 'wb')
+	fileOpen = open(ROLE_FILE_NAME, 'wb')
 	if fileOpen != None:
 		pickle.dump(myRolesList, fileOpen)
-		fileOpen.Close()
+		fileOpen.close()
 
 def rolesCommit(): 
-	global roleFile,imageText,tbQuotes, imageFile, imageName, top
+	global roleFile,imageText,tbQuotes, imageFile, imageName, top, eRoleName
 
 	deterrentconfig = {}
-	deterrentconfig['Name'] = imageName
+	deterrentconfig['Name'] = eRoleName.get()
 	deterrentconfig['ImagePath'] = imageFile
-	deterrentconfig['QuotesList'] = tbQuotes.get(1.0, END)
+	deterrentconfig['QuotesList'] = tbQuotes.get(1.0, END).rstrip().split('\n')
+	print deterrentconfig
 	myRolesList.append(deterrentconfig)
+	lbRoleModels.insert(END, deterrentconfig['Name'])
 	commitRoleModelsToFile()
+	top.destroy()
 
-	
-<<<<<<< HEAD
-	
 def rolesCommit_old():	
-	global roleFile,imageText,tbQuotes, imageFile, imageName, top
-=======
-def rolesCommit():	
 	global roleFile,imageText,tbQuotes, imageFile, imageName, top, eRoleName
->>>>>>> 97662282ae78a33e5e9bae8b047dd5c3b9d86d51
 	
 	myQuotes=tbQuotes.get(1.0,END)
 	g=0
@@ -241,9 +267,22 @@ def rolesCommit():
 		print "error"
 	
 	
+def roleWindowEDIT():
+	global imageName, imageText, imageFile
 
+	# TODO what if more than one entry is highlighted?
+	selectedIndices = lbRoleModels.curselection()
+	if len(selectedIndices) == 0:
+		return
 	
-def	roleWindowEDIT():
+	roleModel = myRolesList[int(selectedIndices[0])]
+	imageName = roleModel['Name']
+	imageText = roleModel['QuotesList']
+	imageFile = roleModel['ImagePath']
+	myRoleWindow()
+
+
+def	roleWindowEDIT_old():
 	global roleFile,imageText,tbQuotes, imageFile, imageName, eRoleName
 	
 	mylist=lbRoleModels.curselection()
@@ -290,9 +329,21 @@ def	roleWindowADD():
 	imageFile=""
 	imageName=""
 	myRoleWindow()
-				
-			
+		
+
 def roleListLoad():
+	global myRolesList, lbRoleModels
+
+	myRolesList = []
+	lbRoleModels.delete(0, END)
+	if os.path.isfile(ROLE_FILE_NAME):
+		roleConfigFile = open(ROLE_FILE_NAME, 'r')
+		if roleConfigFile != None:
+			myRolesList = pickle.load(roleConfigFile)
+			for role in myRolesList:
+				lbRoleModels.insert(END, role['Name'])
+			
+def roleListLoad_old():
 	global roleFile
 	roleFile=open(ROLE_FILE_NAME,'r')
 	if roleFile!=None:
@@ -310,12 +361,12 @@ def roleListLoad():
 				g=0
 				
 	roleFile.close()
-			
+
 def build_layout():
 	global lbSiteList, SiteStr, intTimeType, BreakLengthStr
 	global liTime, root, rbTimeRadios, intListType, lbRoleModels
 	global roleName, roleText, roleFile, myRolesList, tbQuotes, imageFile
-	global lbRolePrev, rbDetRadios, intDetType
+	global lbRolePrev, rbDetRadios, intDetType, entSite, bSite
 	
 	root= Tk()
 	menubar = Menu(root)
@@ -346,6 +397,7 @@ def build_layout():
 	SiteStr = StringVar()
 	entSite = Entry(frame, textvariable=SiteStr)
 	entSite.grid(row=0, column=1)
+	entSite.bind('<Key>', lookForEdit)
 
 	laSite = Label(frame, text="Address")
 	laSite.grid(row=0,column=0)
@@ -353,7 +405,7 @@ def build_layout():
 	bSite = Button(frame, text="Add Site", command=addSite)
 	bSite.grid(row=0,column=2)
 
-	lbSiteList=Listbox(root,selectmode=EXTENDED)
+	lbSiteList=Listbox(root,selectmode=EXTENDED, exportselection=0)
 	lbSiteList.grid(row=2, column=0)
 
 	bRemoveSite = Button(root, text="Remove Site", command=removeSite)
@@ -400,7 +452,7 @@ def build_layout():
 	fTimeScroll=Frame(fTimeList)
 	fTimeScroll.grid(row=4,column=0)
 	scTime = Scrollbar(fTimeScroll, orient=VERTICAL)
-	liTime = Listbox(fTimeScroll, selectmode=EXTENDED,yscrollcommand=scTime.set)
+	liTime = Listbox(fTimeScroll, selectmode=EXTENDED,yscrollcommand=scTime.set, exportselection=0)
 	liTime.grid(row=0, column=0, sticky=N+S, rowspan=1)
 
 	scTime.config(command=liTime.yview)
@@ -430,7 +482,7 @@ def build_layout():
 	rbDetRadios[1].grid(row=1,column=0,sticky=W)
 	rbDetRadios[2].grid(row=2,column=0,sticky=W)
 
-	lbRoleModels= Listbox(fDets)
+	lbRoleModels= Listbox(fDets, exportselection=0)
 	lbRoleModels.grid(row=3,column=0)
 	
 	roleFrame=Frame(fDets)
