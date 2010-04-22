@@ -45,13 +45,13 @@ def addSite():
 	siteconfig['BlockConfig']['Method'] = blocktype
 	if blocktype == TIME_TYPE_ALLOW_BREAKS:
 		siteconfig['BlockConfig']['BreakLength']=BreakLengthStr.get()
-	if blocktype == TIME_TYPE_BLOCK_SCHEDULING:
+		siteconfig['BlockConfig']['TimeBetweenBreaks']=WaitTimeStr.get()
+	elif blocktype == TIME_TYPE_BLOCK_SCHEDULING:
 		allowed_blocks=liTime.curselection()
 		siteconfig['BlockConfig']['AllowedTime'] = []
 		for allowed_time in allowed_blocks:
 			siteconfig['BlockConfig']['AllowedTime'].append(allowed_time)
 
-	# TODO deterrents
 	dettype = intDetType.get()
 	siteconfig['Deterrents'] = {}
 	siteconfig['Deterrents']['Method'] = dettype
@@ -363,7 +363,7 @@ def roleListLoad_old():
 	roleFile.close()
 
 def build_layout():
-	global lbSiteList, SiteStr, intTimeType, BreakLengthStr
+	global lbSiteList, SiteStr, intTimeType, BreakLengthStr, WaitTimeStr
 	global liTime, root, rbTimeRadios, intListType, lbRoleModels
 	global roleName, roleText, roleFile, myRolesList, tbQuotes, imageFile
 	global lbRolePrev, rbDetRadios, intDetType, entSite, bSite
@@ -446,7 +446,14 @@ def build_layout():
 	BreakLengthStr = StringVar()
 	entBreakLength=Entry(fBreakFrame, textvariable=BreakLengthStr)
 	entBreakLength.grid(row=2,column=1)
+
+	lbBreakWaitTime = Label(fBreakFrame, text="Time Between Breaks")
+	lbBreakWaitTime.grid(row=3,column=0,sticky=E,padx=2)
+	WaitTimeStr = StringVar()
+	entWaitTime = Entry(fBreakFrame, textvariable=WaitTimeStr)
+	entWaitTime.grid(row=3,column=1)
 	fBreakFrame.grid(row=2,column=0,sticky=E,padx=20)
+
 
 	# Blocking Method / Block Scheduling
 	fTimeScroll=Frame(fTimeList)
