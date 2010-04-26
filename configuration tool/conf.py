@@ -211,7 +211,7 @@ def myRoleWindow():
 	else:
 		print "error"
 	
-	bSetPicture=Button(top,text="Load Picture", command=loadRoleModel)
+	bSetPicture=Button(top,text="Select Picture", command=loadRoleModel)
 	bSetPicture.grid(row=4,column=2)
 	
 	lbQuotes=Label(top,text="Quotes")
