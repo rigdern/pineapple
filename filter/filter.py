@@ -1,4 +1,4 @@
-import pickle
+import pickle, datetime, time
 from threading import Timer
 
 # Should be shared with configuration tool.
@@ -56,7 +56,8 @@ class AbstractRule(object):
 class DeterOnceRule(AbstractRule):
   """Deter the user until he accepts the deterrent. Afterwards, allow access
   to the website."""
-  pass
+  def enable(self):
+    self.filter.hook(self.address)
 
 class TimeToleranceRule(AbstractRule):
   """When a user accepts the deterrent, allow uninterrupted access to the
@@ -67,6 +68,9 @@ class TimeToleranceRule(AbstractRule):
     self.allowed_duration = int(params['BreakLength'])*60
     self.block_duration = int(params['TimeBetweenBreaks'])*60
     self.timer = None
+  
+  def enable(self):
+    self.filter.hook(self.address)
   
   def disable(self):
     if self.timer:
@@ -93,6 +97,7 @@ class BlockSchedulingRule(AbstractRule):
     if self._current_hour() in self.allowed_hours:
       self._establish_timer(self._next_deterred_hour(), self._hook_address)
     else:
+      self.filter.hook(self.address)
       self._establish_timer(self._next_allowed_hour(), self._unhook_address)
   
   def disable(self):
@@ -127,8 +132,8 @@ class BlockSchedulingRule(AbstractRule):
   def _next_hour(self, allowed):
     # If we're looking for an allowed hour, make sure at least one exists.
     # If we're looking for a deterred hour, make sure at least one exists.
-    if allowed and len(self.allowed_times) == 0 \
-      or (not allowed and len(self.allowed_times) == 24)
+    if allowed and len(self.allowed_hours) == 0 \
+      or (not allowed and len(self.allowed_hours) == 24):
       return None
     
     if allowed:
@@ -138,11 +143,11 @@ class BlockSchedulingRule(AbstractRule):
     
     base = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     # When's the next hour TODAY?
-    hour = find_if(pred, range(current_hour+1, 24))
+    hour = find_if(pred, range(self._current_hour()+1, 24))
     if hour is None:
       # Nothing today. When's the next hour TOMORROW?
       base += datetime.timedelta(days=1)
-      hour = find_if(pred, range(0, current_hour+1))
+      hour = find_if(pred, range(0, self._current_hour()+1))
     
     return time.mktime(base.replace(hour=hour).timetuple())
   
@@ -227,12 +232,24 @@ class Filter(object):
         deterrent = Deterrent(deterrent_type)
       self.rules[address] = RuleFactory.rule_for_dict(self, address, deterrent, raw_rule['BlockConfig'])
   
+  def website_requested(self, address):
+    return self.rules[address].deterrent.render()
+  
+  def undeter_requested(self, address):
+    rule = self.rules[address]
+    ret = rule.deterrent.undeter_requested()
+    if ret == True:
+      self.unhook(address)
+      rule.undeterred()
+      return True
+    else:
+      return ret
+  
   def start(self):
-    # XXX update & save hosts file based on rules
-    [rule.enable() for rule in self.rules]
+    [rule.enable() for rule in self.rules.itervalues()]
   
   def shut_down(self):
-    [rule.disable() for rule in self.rules]
+    [rule.disable() for rule in self.rules.itervalues()]
     self.hosts.restore()
   
   def hook(self, address):
