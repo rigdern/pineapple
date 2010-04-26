@@ -22,7 +22,6 @@ PROJECT_DIR="./proj/"
 PROJECT_EXT=".cf"
 
 mySites=[]
-#rbRadios=[]
 picRole=0
 lastselection = None
 myRolesList=[]
@@ -30,7 +29,6 @@ iProjType=0
 
 
 ROLE_FILE_NAME="myRoles"
-#roleFile=open(ROLE_FILE_NAME,'w')
 
 
 def removeSite():
@@ -87,8 +85,7 @@ def openFile():
 			lbSiteList.insert(END, k['url'])
 
 def saveFile():
-	#fileName = tkFileDialog.asksaveasfilename(parent=setting, title="Save the configuration file as...")
-	global eProjName
+	#global eProjName
 	fileName = eProjName.get()
 	if len(fileName) > 1:
 		outfile = open(PROJECT_DIR + '/' + fileName, 'wb')
@@ -159,18 +156,10 @@ def clearAllFields():
 	lbRoleModels.selection_clear(0, END)
 
 def loadRoleModel():
-#<<<<<<< HEAD
-#	global lbRolePrev
-#	fileM=tkFileDialog.askopenfilename(parent=setting,title='Choose a file')
-#	print fileM
-#	if fileM!=None:
-#		myPic=PhotoImage(file=fileM)
-#=======
 	global lbRolePrev, imageFile
 	imageFile=tkFileDialog.askopenfilename(parent=setting,title='Choose a file')
 	if imageFile!=None:
 		myPic=PhotoImage(file=imageFile)
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
 		lbRolePrev.config(image=myPic)
 		lbRolePrev.image = myPic
 		
@@ -183,13 +172,7 @@ def setRoleName():
 	roleName= eRoleName.get()
 	
 def myRoleWindow():
-#<<<<<<< HEAD
-	global imageFile, tbQuotes, top, lbRolePrev, eRoleName, imageName
 	top=Toplevel(setting)
-#=======
-#	global imageFile, tbQuotes, top, lbRolePrev, eRoleName, imageName, eRoleName
-#	top=Toplevel(root)
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
 	
 	lbRoleMo=Label(top,text="Role Model")
 	lbRoleMo.grid(row=0,column=1)
@@ -206,7 +189,6 @@ def myRoleWindow():
 	lbPreview=Label(top,text="Preview")
 	lbPreview.grid(row=2,column=0,sticky=W)
 	
-	#image1=PhotoImage(file="earth.gif")
 	imageLab=PhotoImage(file=imageFile)
 	if imageLab!=None:
 		lbRolePrev=Label(top, image=imageLab)
@@ -389,17 +371,11 @@ def roleListLoad_old():
 	roleFile.close()
 
 def build_layout():
-#<<<<<<< HEAD
-#	global lbSiteList, SiteStr, intTimeType, BreakLengthStr
 	global liTime, setting, rbTimeRadios, intListType, lbRoleModels
 	global roleName, roleText, roleFile, myRolesList, tbQuotes, imageFile
-#	global lbRolePrev, projects, eProjName
-#=======
 	global lbSiteList, SiteStr, intTimeType, BreakLengthStr, WaitTimeStr
-#	global liTime, root, rbTimeRadios, intListType, lbRoleModels
 	global roleName, roleText, roleFile, myRolesList, tbQuotes, imageFile
 	global lbRolePrev, rbDetRadios, intDetType, entSite, bSite, projects, eProjName, rbRadios
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
 	
 	setting= Toplevel(projects)
 	menubar = Menu(setting)
@@ -439,13 +415,8 @@ def build_layout():
 	bSite = Button(frame, text="Add Site", command=addSite)
 	bSite.grid(row=0,column=2)
 
-#<<<<<<< HEAD
 	lbSiteList=Listbox(fWebsites,selectmode=EXTENDED, exportselection=0)
 	lbSiteList.grid(row=3, column=0)
-#=======
-#	lbSiteList=Listbox(root,selectmode=EXTENDED, exportselection=0)
-#	lbSiteList.grid(row=2, column=0)
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
 
 	bRemoveSite = Button(fWebsites, text="Remove Site", command=removeSite)
 	bRemoveSite.grid(row=4,column=0)
@@ -492,17 +463,12 @@ def build_layout():
 	BreakLengthStr = StringVar()
 	entBreakLength=Entry(fBreakFrame, textvariable=BreakLengthStr)
 	entBreakLength.grid(row=2,column=1)
-#<<<<<<< HEAD
-#	fBreakFrame.grid(row=3,column=0,sticky=E,padx=20)
-#=======
 
 	lbBreakWaitTime = Label(fBreakFrame, text="Time Between Breaks")
 	lbBreakWaitTime.grid(row=3,column=0,sticky=E,padx=2)
 	WaitTimeStr = StringVar()
 	entWaitTime = Entry(fBreakFrame, textvariable=WaitTimeStr)
 	entWaitTime.grid(row=3,column=1)
-#	fBreakFrame.grid(row=2,column=0,sticky=E,padx=20)
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
 
 	fBreakFrame.grid(row=3,column=0,sticky=E,padx=20)
 
@@ -530,17 +496,12 @@ def build_layout():
 	fDeterrents= Frame(setting)
 	intDetType=IntVar()
 	
-#<<<<<<< HEAD
 	lbDet=Label(fDeterrents,text="Deterrents")
 	lSpace=Label(fDeterrents,text="")
 	lSpace.grid(row=0,column=0)
 	lbDet.grid(row=1,column=6)
 	fDets=Frame(fDeterrents)
-#=======
-#	lbDet=Label(root,text="Deterrents")
-#	lbDet.grid(row=0,column=6)
-#	fDets=Frame(root)
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
+
 	rbDetRadios=[]
 	rbDetRadios.append(Radiobutton(fDets,text="Only Block", variable=intDetType,value=DET_TYPE_DENY))
 	rbDetRadios.append(Radiobutton(fDets,text="Type Deterrent", variable=intDetType,value=DET_TYPE_TYPE))
@@ -563,16 +524,11 @@ def build_layout():
 	bEditWindow.config(command=roleWindowEDIT)
 	bEditWindow.grid(row=0,column=1)
 	roleFrame.grid(row=5,column=0)
-#<<<<<<< HEAD
 	
 	fDets.grid(row=3,column=6)
 	fDeterrents.grid(row=3,column=6)
 	
 	
-#=======
-
-#	fDets.grid(row=2,column=6)	
-#>>>>>>> 912814b6d4c9c44d2fffb8f7b4d3e953a44b4b29
 	roleListLoad()
 	
 	fProjInfo = Frame(setting)
@@ -659,12 +615,8 @@ def getProjects():
 		projectsList.append(i)
 		lbProjects.insert(END,i)
 	
-	
-	#build_layout()
-	#mainloop()
-	
+		
 def main():
-	#build_layout()
 	projectWindow()
 	
 
