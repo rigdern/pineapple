@@ -1,10 +1,17 @@
 import pickle
+from threading import Timer
 
 # Should be shared with configuration tool.
 DET_TYPE_DENY = 0
 DET_TYPE_TYPE = 1
 DET_TYPE_ROLES = 2
 ROLE_FILE_NAME="myRoles"
+
+def find_if(pred, seq):
+  for x in seq:
+    if pred(x):
+      return x
+  return None
 
 class RoleModel(object):
   def __init__(self, params):
@@ -28,63 +35,130 @@ class Website(object):
 #{'url': 'block-schedule.com', 'BlockConfig': {'AllowedTime': ['0', '1', '2', '3', '4', '8', '9'], 'Method': 2}, 'BlackWhiteList': 1}
 
 class AbstractRule(object):
-  def __init__(self, params):
+  def __init__(self, flter, address, deterrent, params):
+    self.filter = flter
+    self.address = address
+    self.deterrent = deterrent
+  
+  def enable(self):
+    """Called when the rule will begin taking effect. Initialize the state."""
     pass
   
-  def is_blocking(self, params):
-    raise NotImplementedError
+  def disable(self):
+    """Called when the rule will no longer be considered. Clean up."""
+    pass
   
-  def website_visited(self):
+  def undeterred(self):
+    """Called when the user has chosen to bypass the deterrent. Prepare for
+    re-enabling the deterrent."""
     pass
 
 class DeterOnceRule(AbstractRule):
   """Deter the user until he accepts the deterrent. Afterwards, allow access
   to the website."""
-  def is_blocking(self):
-    return True
+  pass
 
 class TimeToleranceRule(AbstractRule):
   """When a user accepts the deterrent, allow uninterrupted access to the
   website for x minutes. After x minutes have elapsed, re-enable the
   deterrent."""
-  def __init__(self, params):
+  def __init__(self, flter, address, deterrent, params):
+    AbstractRule.__init__(self, flter, address, deterrent, params)
     self.allowed_duration = int(params['BreakLength'])*60
     self.block_duration = int(params['TimeBetweenBreaks'])*60
+    self.timer = None
   
-  def is_blocking(self):
-    now = time.time()
-    if self.block_start is None:
-      return False
-    elif self.block_start <= now <= self.block_end:
-      return True
-    else:
-      return False
+  def disable(self):
+    if self.timer:
+      self.timer.cancel()
+      self.timer = None
   
-  def website_visited(self):
-    now = time.time()
-    if self.block_start is None:
-      self.block_start = now + self.allowed_duration
-      self.block_end = self.block_start + self.block_duration
-    elif now > self.block_end:
-      self.block_start = self.block_end = None
+  def undeterred(self):
+    """Re-enable the deterrent after *allowed_duration* minutes."""
+    self.timer = Timer(self.allowed_duration, self._hook_address, [])
+    self.timer.start()
+  
+  def _hook_address(self):
+    self.timer = None
+    self.filter.hook(self.address)
 
 class BlockSchedulingRule(AbstractRule):
   """Allow uninterrupted access to the website during the allowed hours. For
   all other hours, deter the user once in each hour."""
-  def __init__(self, params):
+  def __init__(self, flter, address, deterrent, params):
+    AbstractRule.__init__(self, flter, address, deterrent, params)
     self.allowed_hours = [int(x) for x in params['AllowedTime']]
   
-  def is_blocking(self):
-    current_hour = datetime.datetime.now().hour
-    return current_hour in self.allowed_hours
+  def enable(self):
+    if self._current_hour() in self.allowed_hours:
+      self._establish_timer(self._next_deterred_hour(), self._hook_address)
+    else:
+      self._establish_timer(self._next_allowed_hour(), self._unhook_address)
+  
+  def disable(self):
+    self._cancel_timer()
+  
+  def undeterred(self):
+    self._cancel_timer()
+    self._establish_timer(self._next_deterred_hour(), self._hook_address)
+  
+  def _hook_address(self):
+    self.filter.hook(self.address)
+    self._establish_timer(self._next_allowed_hour(), self._unhook_address)
+  
+  def _unhook_address(self):
+    self.filter.unhook(self.address)
+    self._establish_timer(self._next_deterred_hour(), self._hook_address)
+  
+  def _establish_timer(self, end_time, callback):
+    # XXX What if now is more in the future than next_time by the time we get
+    # to the subtraction code? Race condition.
+    if end_time is not None:
+      self.timer = Timer(end_time - time.time(), callback)
+  
+  def _cancel_timer(self):
+    if self.timer:
+      self.timer.cancel()
+      self.timer = None
+  
+  def _current_hour(self):
+    return datetime.datetime.now().hour
+  
+  def _next_hour(self, allowed):
+    # If we're looking for an allowed hour, make sure at least one exists.
+    # If we're looking for a deterred hour, make sure at least one exists.
+    if allowed and len(self.allowed_times) == 0 \
+      or (not allowed and len(self.allowed_times) == 24)
+      return None
+    
+    if allowed:
+      pred = lambda hour: hour in self.allowed_hours
+    else:
+      pred = lambda hour: hour not in self.allowed_hours
+    
+    base = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    # When's the next hour TODAY?
+    hour = find_if(pred, range(current_hour+1, 24))
+    if hour is None:
+      # Nothing today. When's the next hour TOMORROW?
+      base += datetime.timedelta(days=1)
+      hour = find_if(pred, range(0, current_hour+1))
+    
+    return time.mktime(base.replace(hour=hour).timetuple())
+  
+  def _next_allowed_hour(self):
+    return self._next_hour(True)
+  
+  def _next_deterred_hour(self):
+    return self._next_hour(False)
 
 class RuleFactory:
   method_rule_map = [DeterOnceRule, TimeToleranceRule, BlockSchedulingRule]
   
   @staticmethod
-  def rule_for_dict(params):
+  def rule_for_dict(flter, address, deterrent, params):
     klass = RuleFactory.method_rule_map[params['Method']]
-    return klass(params)
+    return klass(flter, address, deterrent, params)
 
 # XXX Path to hosts file should depend on the operating system
 class HostsFile(object):
@@ -134,51 +208,40 @@ class Filter(object):
   def __init__(self, config_path):
     self.hosts = HostsFile()
     self.load_role_models(ROLE_FILE_NAME)
-    self.load_websites(config_path)
+    self.load_rules(config_path)
   
   def load_role_models(self, path):
     self.role_models = {}
     for model in pickle.load(open(path)):
       self.role_models[model['Name']] = RoleModel(model)
   
-  def load_websites(self, config_path):
-    self.websites = {}
-    for raw_website in pickle.load(open(config_path)):
-      address = raw_website['url']
-      rule = RuleFactory.rule_for_dict(raw_website['BlockConfig'])
-      deterrent_type = int(raw_website['Deterrents']['Method'])
+  def load_rules(self, config_path):
+    self.rules = {}
+    for raw_rule in pickle.load(open(config_path)):
+      address = raw_rule['url']
+      deterrent_type = int(raw_rule['Deterrents']['Method'])
       if deterrent_type == DET_TYPE_ROLES:
-        role_model = self.role_models[raw_website['Deterrents']['RoleModelName']]
+        role_model = self.role_models[raw_rule['Deterrents']['RoleModelName']]
         deterrent = Deterrent(deterrent_type, role_model)
       else:
         deterrent = Deterrent(deterrent_type)
-      self.websites[address] = Website(address, rule, deterrent)
+      self.rules[address] = RuleFactory.rule_for_dict(self, address, deterrent, raw_rule['BlockConfig'])
+  
+  def start(self):
+    # XXX update & save hosts file based on rules
+    [rule.enable() for rule in self.rules]
   
   def shut_down(self):
+    [rule.disable() for rule in self.rules]
     self.hosts.restore()
   
-  def website_visited(self, url):
-    website = self.websites[url]
-    website.rule.website_visited()
-  
-  def is_blocked(self, url):
-    website = self.websites[url]
-    if website.blocked != website.rule.is_blocking():
-      if website.blocked:
-        self._unblock(website)
-      else:
-        self._block(website)
-    return website.blocked
-  
-  def _block(self, website):
-    self.hosts.add(website.address, '127.0.0.1')
+  def hook(self, address):
+    self.hosts.add(address, '127.0.0.1')
     self.hosts.save()
-    website.blocked = True
   
-  def _unblock(self, website):
-    self.hosts.remove(website.address)
+  def unblock(self, address):
+    self.hosts.remove(address)
     self.hosts.save()
-    website.blocked = False
 
 if __name__ == '__main__':
   f = Filter("configs/sampler")
