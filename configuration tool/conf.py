@@ -16,6 +16,7 @@ TIME_TYPE_BLOCK_SCHEDULING = 2
 DET_TYPE_DENY = 0
 DET_TYPE_TYPE = 1
 DET_TYPE_ROLES = 2
+DET_TYPE_EXPLAIN = 3
 
 PROJECT_DIR="./proj/"
 PROJECT_EXT=".cf"
@@ -537,14 +538,16 @@ def build_layout():
 	rbDetRadios=[]
 	rbDetRadios.append(Radiobutton(fDets,text="Only Block", variable=intDetType,value=DET_TYPE_DENY))
 	rbDetRadios.append(Radiobutton(fDets,text="Type Deterrent", variable=intDetType,value=DET_TYPE_TYPE))
+	rbDetRadios.append(Radiobutton(fDets,text="Explain Value", variable=intDetType, value=DET_TYPE_EXPLAIN))
 	rbDetRadios.append(Radiobutton(fDets,text="Role Models", variable=intDetType,value=DET_TYPE_ROLES))
 
 	rbDetRadios[0].grid(row=0,column=0,sticky=W)
 	rbDetRadios[1].grid(row=1,column=0,sticky=W)
 	rbDetRadios[2].grid(row=2,column=0,sticky=W)
+	rbDetRadios[3].grid(row=3,column=0,sticky=W)
 
 	lbRoleModels= Listbox(fDets, exportselection=0)
-	lbRoleModels.grid(row=3,column=0)
+	lbRoleModels.grid(row=4,column=0)
 	
 	roleFrame=Frame(fDets)
 	bAddWindow=Button(roleFrame,text="Add New")
@@ -553,7 +556,7 @@ def build_layout():
 	bEditWindow=Button(roleFrame,text="Edit Selection")
 	bEditWindow.config(command=roleWindowEDIT)
 	bEditWindow.grid(row=0,column=1)
-	roleFrame.grid(row=4,column=0)
+	roleFrame.grid(row=5,column=0)
 #<<<<<<< HEAD
 	
 	fDets.grid(row=3,column=6)
