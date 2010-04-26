@@ -71,9 +71,8 @@ def addSite():
 	print siteconfig
 
 	mySites.append(siteconfig)
-	lbSiteList.delete(0,END)
-	for item in mySites:
-		lbSiteList.insert(END,item['url'])
+	lbSiteList.insert(END, siteconfig['url'])
+	clearAllFields()
 
 def openFile():
 	global mySites
@@ -151,6 +150,13 @@ def lookForEdit(event):
 
 	return "break"
 
+def clearAllFields():
+	intDetType.set(0)
+	intTimeType.set(0)
+	BreakLengthStr.set('')
+	WaitTimeStr.set('')
+	liTime.select_clear(0, END)
+	lbRoleModels.selection_clear(0, END)
 
 def loadRoleModel():
 #<<<<<<< HEAD
