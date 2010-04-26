@@ -610,6 +610,7 @@ def projectWindow():
 	lProjects.grid(row=0,column=0,sticky=W, )
 	lbProjects = Listbox(projects)
 	lbProjects.grid(row=1,column=0, pady=3, padx=3)
+	lbProjects.bind("<Double-Button-1>", lambda e: dEditProj())
 	frame=Frame(projects)
 	bProjectsE=Button(frame,text="Edit",command=dEditProj)
 	bProjectsN=Button(frame,text="New",command=dNewProj)
@@ -629,8 +630,6 @@ def openProject():
 	infile = open(PROJECT_DIR+pjname)
 	if infile != None:
 		mySites = pickle.load(infile)
-		print "filename: ", pjname
-		print "mysites: ", mySites
 		if mySites == None or len(mySites) == 0:
 			return
 		if lbSiteList == None:
@@ -638,8 +637,8 @@ def openProject():
 		lbSiteList.delete(0, END)
 		for k in mySites:
 			lbSiteList.insert(END, k['url'])
-		
-
+		eProjName.delete(0, END)
+		eProjName.insert(END, pjname)
 	
 def getProjects():
 	global lbProjects, projectsList, projects
