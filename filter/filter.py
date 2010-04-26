@@ -37,11 +37,16 @@ class AbstractRule(object):
   def website_visited(self):
     pass
 
-class AlwaysBlockRule(AbstractRule):
+class DeterOnceRule(AbstractRule):
+  """Deter the user until he accepts the deterrent. Afterwards, allow access
+  to the website."""
   def is_blocking(self):
     return True
 
 class TimeToleranceRule(AbstractRule):
+  """When a user accepts the deterrent, allow uninterrupted access to the
+  website for x minutes. After x minutes have elapsed, re-enable the
+  deterrent."""
   def __init__(self, params):
     self.allowed_duration = int(params['BreakLength'])*60
     self.block_duration = int(params['TimeBetweenBreaks'])*60
@@ -64,6 +69,8 @@ class TimeToleranceRule(AbstractRule):
       self.block_start = self.block_end = None
 
 class BlockSchedulingRule(AbstractRule):
+  """Allow uninterrupted access to the website during the allowed hours. For
+  all other hours, deter the user once in each hour."""
   def __init__(self, params):
     self.allowed_hours = [int(x) for x in params['AllowedTime']]
   
@@ -72,7 +79,7 @@ class BlockSchedulingRule(AbstractRule):
     return current_hour in self.allowed_hours
 
 class RuleFactory:
-  method_rule_map = [AlwaysBlockRule, TimeToleranceRule, BlockSchedulingRule]
+  method_rule_map = [DeterOnceRule, TimeToleranceRule, BlockSchedulingRule]
   
   @staticmethod
   def rule_for_dict(params):
@@ -178,7 +185,7 @@ if __name__ == '__main__':
   dets = ['Deny', 'Type a Long String', 'Role Model']
   for url, w in f.websites.iteritems():
     print url, w.rule.__class__.__name__
-    if w.rule.__class__ == AlwaysBlockRule:
+    if w.rule.__class__ == DeterOnceRule:
       print '\tAlways block'
     elif w.rule.__class__ == TimeToleranceRule:
       print '\tUse time:', w.rule.allowed_duration
