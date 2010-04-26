@@ -232,18 +232,24 @@ class Filter(object):
         deterrent = Deterrent(deterrent_type)
       self.rules[address] = RuleFactory.rule_for_dict(self, address, deterrent, raw_rule['BlockConfig'])
   
-  def website_requested(self, address):
-    return self.rules[address].deterrent.render()
+  def website_requested(self, address, request):
+    try:
+      return self.rules[address].deterrent.render(request)
+    except KeyError:
+      return "Host not supposed to be used with filter: %s"%address
   
-  def undeter_requested(self, address):
-    rule = self.rules[address]
-    ret = rule.deterrent.undeter_requested()
-    if ret == True:
-      self.unhook(address)
-      rule.undeterred()
-      return True
-    else:
-      return ret
+  def undeter_requested(self, address, request):
+    try:
+      rule = self.rules[address]
+      ret = rule.deterrent.undeter_requested(request)
+      if ret == True:
+        self.unhook(address)
+        rule.undeterred()
+        return True
+      else:
+        return ret
+    except KeyError:
+      return "Host not supposed to be used with filter: %s"%address
   
   def start(self):
     [rule.enable() for rule in self.rules.itervalues()]

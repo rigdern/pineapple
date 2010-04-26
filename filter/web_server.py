@@ -6,18 +6,13 @@ from filter import Filter
 # Twisted looks promising.
 # Make multithreaded so it can handle multiple connections simultaneously.
 
-def html_dict(d):
-  ret = ''
-  for k, v in d.iteritems():
-    ret += '<b>%s:</b> [%s]<br>\n'%(k, v)
-  return ret
-
 class Request(object):
-  def __init__(self):
-    pass
+  def __init__(self, path, post_data):
+    self.path = path
+    self.post = post_data
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-  def do_GET(self):
+  def handle_request(self):
     global flter
     
     self.send_response(200)
@@ -25,43 +20,35 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.end_headers()
     
     host = self.headers['Host']
-    req = {}
-    req['Path'] = self.path
-    ret = ''
-    ret += html_dict(req)
-    if self.command == 'POST':
-      form = cgi.FieldStorage(fp=self.rfile,
-        headers=self.headers,
-        environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']})
-      post = {}
-      for field in form.keys():
-        post[field] = form[field].value
-      ret += '<br><br>POST data:<br>\n'
-      ret += html_dict(post)
-    ret += """<form method="post" action="%s">
-    Name: <input type="text" name="name"><br>
-    <input type="submit" name="submit" value="Submit">
-    </form>"""%self.path
+    request = Request(self.path, self.post_data())
     
-    self.wfile.write(ret)
-    self.wfile.close()
-    return
-    
-    print 'request'
     if host == '127.0.0.1':
-      print 'unblock'
-      ret = flter.undeter_requested()
+      try:
+        ret = flter.undeter_requested(request.post['host'], request)
+      except KeyError:
+        self.wfile.write("Malformed request")
+        self.wfile.close()
+        return
       if ret == True:
         self.wfile.write("refresh the page")
       else:
         self.wfile.write(ret)
     else:
-      print 'deter'
-      self.wfile.write(flter.website_requested(host))
+      self.wfile.write(flter.website_requested(host, request))
     
     self.wfile.close()
+  
+  def post_data(self):
+    post_data = {}
+    if self.command == 'POST' and 'Content-Type' in self.headers:
+      form = cgi.FieldStorage(fp=self.rfile,
+        headers=self.headers,
+        environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']})
+      for field in form.keys():
+        post_data[field] = form[field].value
+    return post_data
 
-  do_POST = do_GET
+  do_POST = do_GET = handle_request
 
 flter = Filter('configs/sampler')
 flter.start()
