@@ -1,10 +1,12 @@
 import pickle, datetime, time
 from threading import Timer
+from deterrents import DeterrentFactory
 
 # Should be shared with configuration tool.
 DET_TYPE_DENY = 0
 DET_TYPE_TYPE = 1
 DET_TYPE_ROLES = 2
+DET_TYPE_EXPLAIN = 3
 ROLE_FILE_NAME="myRoles"
 
 def find_if(pred, seq):
@@ -18,21 +20,6 @@ class RoleModel(object):
     self.name = params['Name']
     self.quotes = params['QuotesList']
     self.picture_path = params['ImagePath']
-
-class Deterrent(object):
-  def __init__(self, det_type, role_model=None):
-    self.type = det_type
-    self.role_model = role_model
-
-class Website(object):
-  def __init__(self, address, rule, deterrent):
-    self.address = address
-    self.rule = rule
-    self.deterrent = deterrent
-    self.blocked = False
-#{'url': 'deny.com', 'BlockConfig': {'Method': 0}, 'BlackWhiteList': 1}
-#{'url': 'break.com', 'BlockConfig': {'Method': 1, 'BreakLength': '10'}, 'BlackWhiteList': 1}
-#{'url': 'block-schedule.com', 'BlockConfig': {'AllowedTime': ['0', '1', '2', '3', '4', '8', '9'], 'Method': 2}, 'BlackWhiteList': 1}
 
 class AbstractRule(object):
   def __init__(self, flter, address, deterrent, params):
@@ -226,10 +213,10 @@ class Filter(object):
       address = raw_rule['url']
       deterrent_type = int(raw_rule['Deterrents']['Method'])
       if deterrent_type == DET_TYPE_ROLES:
-        role_model = self.role_models[raw_rule['Deterrents']['RoleModelName']]
-        deterrent = Deterrent(deterrent_type, role_model)
+        deterrent = DeterrentFactory.deterrent_for_type(deterrent_type,
+          raw_rule['Deterrents']['RoleModelName'])
       else:
-        deterrent = Deterrent(deterrent_type)
+        deterrent = DeterrentFactory.deterrent_for_type(deterrent_type)
       self.rules[address] = RuleFactory.rule_for_dict(self, address, deterrent, raw_rule['BlockConfig'])
   
   def website_requested(self, address, request):
