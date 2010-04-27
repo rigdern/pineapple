@@ -219,14 +219,15 @@ class Filter(object):
         deterrent = DeterrentFactory.deterrent_for_type(deterrent_type)
       self.rules[address] = RuleFactory.rule_for_dict(self, address, deterrent, raw_rule['BlockConfig'])
   
-  def website_requested(self, address, request):
+  def website_requested(self, request):
     try:
-      return self._html_wrap(self.rules[address].deterrent.render(request))
+      return self._html_wrap(self.rules[request.target_host].deterrent.render(request))
     except KeyError:
       return "Host not supposed to be used with filter: %s"%address
   
-  def undeter_requested(self, address, request):
+  def undeter_requested(self, request):
     try:
+      address = request.target_host
       rule = self.rules[address]
       ret = rule.deterrent.undeter_requested(request)
       if ret == True:
@@ -249,7 +250,7 @@ class Filter(object):
     self.hosts.add(address, '127.0.0.1')
     self.hosts.save()
   
-  def unblock(self, address):
+  def unhook(self, address):
     self.hosts.remove(address)
     self.hosts.save()
   

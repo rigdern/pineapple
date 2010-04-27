@@ -1,4 +1,4 @@
-import BaseHTTPServer, cgi
+import BaseHTTPServer, SimpleHTTPServer, cgi, os
 from filter import Filter
 
 # Changes to the hosts file don't seem to be recoginzed right away. Maybe we
@@ -6,37 +6,52 @@ from filter import Filter
 # Twisted looks promising.
 # Make multithreaded so it can handle multiple connections simultaneously.
 
+WEBROOT = "webroot"
+
 class Request(object):
-  def __init__(self, path, post_data):
+  def __init__(self, webroot=None, path=None, post_data=None, target_host=None):
+    self.webroot = webroot
     self.path = path
     self.post = post_data
+    self.target_host = target_host
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+  def do_HEAD(self):
+    os.chdir(WEBROOT)
+    try:
+      SimpleHTTPServer.SimpleHTTPRequestHandler.do_HEAD(self)
+    finally:
+      os.chdir('..')
+  
   def handle_request(self):
     global flter
     
-    self.send_response(200)
-    self.send_header("Content-type", "text/html")
-    self.end_headers()
-    
     host = self.headers['Host']
-    request = Request(self.path, self.post_data())
+    request = Request(WEBROOT, self.path, self.post_data())
     
     if host == '127.0.0.1':
-      try:
-        ret = flter.undeter_requested(request.post['host'], request)
-      except KeyError:
-        self.wfile.write("Malformed request")
-        self.wfile.close()
-        return
-      if ret == True:
-        self.wfile.write("refresh the page")
+      if self.command == 'GET' and self.path != '/':
+        # Serve a static file.
+        os.chdir('webroot')
+        try:
+          SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+        finally:
+          os.chdir('..')
       else:
-        self.wfile.write(ret)
+        try:
+          request.target_host = request.post['host']
+          ret = flter.undeter_requested(request)
+        except KeyError:
+          self.send_ok("Malformed request: 'host' form parameter missing")
+          return
+        if ret == True:
+          redirect_url = "http://%s%s"%(request.target_host, self.path)
+          self.send_redirect(redirect_url)
+        else:
+          self.send_ok(ret)
     else:
-      self.wfile.write(flter.website_requested(host, request))
-    
-    self.wfile.close()
+      request.target_host = host
+      self.send_ok(flter.website_requested(request))
   
   def post_data(self):
     post_data = {}
@@ -47,11 +62,25 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       for field in form.keys():
         post_data[field] = form[field].value
     return post_data
+  
+  def send_ok(self, content):
+    self.send_response(200)
+    self.send_header("Content-type", "text/html")
+    self.end_headers()
+    self.wfile.write(content)
+    self.wfile.close()
+  
+  def send_redirect(self, redirect_url):
+    self.send_response(301)
+    self.send_header("Location", redirect_url)
+    self.end_headers()
 
   do_POST = do_GET = handle_request
 
-flter = Filter('configs/sampler')
+flter = Filter('proj/Dude')
 flter.start()
+if not os.path.exists(WEBROOT):
+  os.makedirs(WEBROOT)
 addr = ('127.0.0.1', 80)
 httpd = BaseHTTPServer.HTTPServer(addr, RequestHandler)
 try:
@@ -59,4 +88,7 @@ try:
   httpd.serve_forever()
 finally:
   flter.shut_down()
+  for file_name in os.listdir(WEBROOT):
+    if file_name.endswith(".JPEG"):
+      os.remove(os.path.join(WEBROOT, file_name))
 print 'done'

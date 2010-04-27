@@ -24,39 +24,39 @@ class StrChrDeterrent(AbstractDeterrent):
     img = Image.new("RGB", (text_width,text_height), "#FFFFFF")
     draw = ImageDraw.Draw(img)
     draw.text((0, 0), s, fill=(0, 0, 0))
-    filename = os.path.join(os.getcwd(), s_hash+".JPEG")
-    img.save(filename, "JPEG")
+    filename = s_hash+".JPEG"
+    file_path = os.path.join(request.webroot, filename)
+    img.save(file_path, "JPEG")
+    # XXX urlencode request.path? Use HTML entities?
     content="""
     Type the following string in order to continue: <br>
     %s<br>
-    <img src="%s" height="%s" width="%s" />
+    <img src="http://127.0.0.1/%s" />
     <br><br>
-    <form action="request.path" method="post">
+    <form action="http://127.0.0.1%s" method="post">
     <input type="text" name="strChar_text" size="50" maxlength="100">
-    <input type="hidden" name="HashShouldBe" value="%s"><br><br>
+    <input type="hidden" name="HashShouldBe" value="%s">
+    <input type="hidden" name="host" value="%s"><br><br>
     <input type="submit" value="Submit" />
     </form>
-    """%(s,filename, text_height, text_width, s_hash)
+    """%(s,filename, request.path, s_hash,
+      request.target_host)
     return content
 
   def undeter_requested(self, request):
-    try:
+    if 'strChar_text' in request.post and 'HashShouldBe' in request.post:
       userText = request.post['strChar_text']
       computerText = request.post['HashShouldBe']
       rp_hash = hashlib.sha1(userText).hexdigest()
       if rp_hash == computerText:
-        content = """
-        Click <a href="%s">here</a> to continue...
-        """%(self.url)
-        return content
-      else:
-        content = """
-        ACCESS DENIED! <br>
-        You have typed an incorrect string.
-        """
-        return content
-    except:
-      return "Error: wrong parameters given."
+        return True
+    
+    content = """
+    ACCESS DENIED! <br>
+    You have typed an incorrect string.<br>
+    <a href="http://%s%s">Retry</a>
+    """%(request.target_host, request.path)
+    return content
 
 class RoleModelDeterrent(AbstractDeterrent):
   def __init__(self, role_model):
@@ -66,38 +66,31 @@ class RoleModelDeterrent(AbstractDeterrent):
     return 'Not yet implemented'
   
   def undeter_requested(self, request):
-    try:
-      return 'Not yet implemented'
-    except:
-      return "Error: wrong parameters given."
+    return 'Not yet implemented'
 
 class BenefitDeterrent(AbstractDeterrent):
   def render(self, request):
     content="""
-    <form action="request.path" method="post">
+    <form action="http://127.0.0.1%s" method="post">
     How does this website benefit your project? <br>
     <textarea name="benefit_text" rows=7 cols=46></textarea> <br>
+    <input type="hidden" name="host" value="%s">
     <input type="submit" value="Submit" />
     </form>
-    """
+    """%(request.path, request.target_host)
     return content
   
   def undeter_requested(self, request):
-    try:
-      userText = read_params['benefit_text']
-      if len(userText) > 0:
-        content = """
-        Click <a href="%s">here</a> to continue...
-        """%(self.url)
-        return content
-      else:
-        content = """
-        ACCESS DENIED! <br>
-        Your reason is not good enough.
-        """
-        return content
-    except:
-      return "Error: wrong parameters given."
+    userText = request.post.get('benefit_text', None)
+    if userText is not None and len(userText) > 0:
+      return True
+    else:
+      content = """
+      ACCESS DENIED! <br>
+      Your reason is not good enough.<br>
+      <a href="http://%s%s">Retry</a>
+      """%(request.target_host, request.path)
+      return content
 
 class DeterrentFactory(object):
   type_deterrent_map = [DenyDeterrent, StrChrDeterrent, RoleModelDeterrent,
