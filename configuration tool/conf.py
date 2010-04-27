@@ -22,6 +22,7 @@ DET_TYPE_EXPLAIN = 3
 PROJECT_DIR="./proj/"
 PROJECT_EXT=".cf"
 
+
 picRole=0
 
 ROLE_FILE_NAME="myRoles"
@@ -149,7 +150,6 @@ class ProjectConfig:
 		
 def main():
     pj = ProjectConfig()
-	
 
 if __name__ == "__main__":
 	main()
