@@ -1,10 +1,11 @@
 # file: conf.py
 
+import sys
+sys.path += ['.']
 
 from Tkinter import *
 from projectconfigdialog import *
 from constants import *
-
 import tkFileDialog
 import os
 import pickle
