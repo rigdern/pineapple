@@ -80,12 +80,18 @@ class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 flter = Filter('proj/Dude')
 flter.start()
 if not os.path.exists(WEBROOT):
-  os.makedirs(WEBROOT)
+  old = os.umask(0002)
+  try:
+    os.makedirs(WEBROOT)
+  finally:
+    os.umask(old)
 addr = ('127.0.0.1', 80)
 httpd = BaseHTTPServer.HTTPServer(addr, RequestHandler)
 try:
   print 'serving'
   httpd.serve_forever()
+except KeyboardInterrupt:
+  print 'goodbye'
 finally:
   flter.shut_down()
   for file_name in os.listdir(WEBROOT):
