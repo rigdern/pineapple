@@ -3,29 +3,12 @@
 
 from Tkinter import *
 from projectconfigdialog import *
+from constants import *
+
 import tkFileDialog
 import os
 import pickle
 
-LIST_TYPE_WHITELIST = 0
-LIST_TYPE_BLACKLIST = 1
-
-TIME_TYPE_DENY_ALWAYS = 0
-TIME_TYPE_ALLOW_BREAKS = 1
-TIME_TYPE_BLOCK_SCHEDULING = 2
-
-DET_TYPE_DENY = 0
-DET_TYPE_TYPE = 1
-DET_TYPE_ROLES = 2
-DET_TYPE_EXPLAIN = 3
-
-PROJECT_DIR="./proj/"
-PROJECT_EXT=".cf"
-
-
-picRole=0
-
-ROLE_FILE_NAME="myRoles"
 
 class ProjectConfig:
     def __init__(self):
@@ -151,8 +134,6 @@ class ProjectConfig:
         else:
             os.makedirs(PROJECT_DIR)
 
-	
-	
 		
 def main():
     pj = ProjectConfig()

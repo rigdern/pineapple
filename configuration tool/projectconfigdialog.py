@@ -1,27 +1,10 @@
 from Tkinter import *
+from constants import *
+
 import tkFileDialog
 import os
 import pickle
 
-LIST_TYPE_WHITELIST = 0
-LIST_TYPE_BLACKLIST = 1
-
-TIME_TYPE_DENY_ALWAYS = 0
-TIME_TYPE_ALLOW_BREAKS = 1
-TIME_TYPE_BLOCK_SCHEDULING = 2
-
-DET_TYPE_DENY = 0
-DET_TYPE_TYPE = 1
-DET_TYPE_ROLES = 2
-DET_TYPE_EXPLAIN = 3
-
-PROJECT_DIR="./proj/"
-PROJECT_EXT=".cf"
-
-picRole=0
-pcd = None
-
-ROLE_FILE_NAME="myRoles"
 
 
 class ProjectConfigDialog():
@@ -57,6 +40,16 @@ class ProjectConfigDialog():
 		
 	else:
 		print "error"
+
+    def removeRoleModel(self):
+        selection = self.lbRoleModels.curselection()
+        if len(selection) != 1:
+            return
+
+        selectedIndex = int(selection[0])
+        self.lbRoleModels.delete(selectedIndex)
+        self.projectconfig.myRolesList.pop(selectedIndex)
+        self.commitRoleModelsToFile()
 
     def clearAllFields(self): 
 	self.intDetType.set(0)
@@ -147,10 +140,19 @@ class ProjectConfigDialog():
 	deterrentconfig['Name'] = self.eRoleName.get()
 	deterrentconfig['ImagePath'] = self.imageFile
 	deterrentconfig['QuotesList'] = self.tbQuotes.get(1.0, END).rstrip().split('\n')
-	print deterrentconfig
-	self.projectconfig.myRolesList.append(deterrentconfig)
-	self.lbRoleModels.insert(END, deterrentconfig['Name'])
-	self.commitRoleModelsToFile()
+
+        found = 0
+	for i in range(0, len(self.projectconfig.myRolesList)):
+            if deterrentconfig['Name'] == self.projectconfig.myRolesList[i]['Name']:
+                self.projectconfig.myRolesList[i] = deterrentconfig
+                found = 1
+                break
+        
+        if not found:
+                self.projectconfig.myRolesList.append(deterrentconfig)
+                self.lbRoleModels.insert(END, deterrentconfig['Name'])
+	        
+        self.commitRoleModelsToFile()
 	self.top.destroy()
 
 
@@ -339,6 +341,10 @@ class ProjectConfigDialog():
 	bEditWindow=Button(roleFrame,text="Edit Selection")
 	bEditWindow.config(command=self.roleWindowEDIT)
 	bEditWindow.grid(row=0,column=1)
+	bDelete=Button(roleFrame,text="Delete Role Model")
+	bDelete.config(command=self.removeRoleModel)
+	bDelete.grid(row=0,column=2)
+
 	roleFrame.grid(row=5,column=0)
 	
 	fDets.grid(row=3,column=6)
