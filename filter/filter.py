@@ -1,4 +1,4 @@
-import pickle, datetime, time
+import pickle, datetime, time, os, shutil
 from threading import Timer
 from deterrents import DeterrentFactory
 
@@ -152,11 +152,16 @@ class RuleFactory:
     klass = RuleFactory.method_rule_map[params['Method']]
     return klass(flter, address, deterrent, params)
 
-# XXX Path to hosts file should depend on the operating system
+# XXX Path to hosts file for Windows shouldn't assume it'll be no the C drive.
 class HostsFile(object):
   UNIX_PATH = '/etc/hosts'
+  WINDOWS_PATH = 'C:\\Windows\\System32\\Drivers\\etc\\hosts'
   def __init__(self):
-    self.path = HostsFile.UNIX_PATH
+    if os.uname()[0] == 'Darwin':
+      self.path = HostsFile.UNIX_PATH
+    else:
+      self.path = HostsFile.WINDOWS_PATH
+    self._back_up_hosts_file(self.path)
     self.orig_hosts_data = open(self.path).read()
     self.hosts = self._read_hosts(self.path)
   
@@ -195,6 +200,11 @@ class HostsFile(object):
       for addr in addrs:
         fp.write('%s\t%s\n'%(addr, name))
     fp.close()
+  
+  def _back_up_hosts_file(self, path):
+    bkup_path = os.path.join(os.path.dirname(self.path), 'hosts-bkup')
+    if not os.path.exists(bkup_path):
+      shutil.copy(path, bkup_path)
 
 class Filter(object):
   def __init__(self, config_path):
