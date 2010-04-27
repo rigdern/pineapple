@@ -83,6 +83,7 @@ class ProjectConfig:
             outfile = open(PROJECT_DIR + fileName, 'wb')
             pickle.dump(self.mySites, outfile)
             outfile.close()      	
+            self.getProjects()
 
     def dEditProj(self):
 	self.pcd = ProjectConfigDialog(self)
