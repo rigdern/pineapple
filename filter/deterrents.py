@@ -30,7 +30,6 @@ class StrChrDeterrent(AbstractDeterrent):
     # XXX urlencode request.path? Use HTML entities?
     content="""
     Type the following string in order to continue: <br>
-    %s<br>
     <img src="http://127.0.0.1/%s" />
     <br><br>
     <form action="http://127.0.0.1%s" method="post">
@@ -39,8 +38,7 @@ class StrChrDeterrent(AbstractDeterrent):
     <input type="hidden" name="host" value="%s"><br><br>
     <input type="submit" value="Submit" />
     </form>
-    """%(s,filename, request.path, s_hash,
-      request.target_host)
+    """%(filename, request.path, s_hash, request.target_host)
     return content
 
   def undeter_requested(self, request):
@@ -63,10 +61,33 @@ class RoleModelDeterrent(AbstractDeterrent):
     self.role_model = role_model
   
   def render(self, request):
-    return 'Not yet implemented'
+    image_path = os.path.basename(self.role_model.picture_path)
+    image_quotes = self.role_model.quotes
+    rand_num = random.randrange(0,len(image_quotes))
+    selected_quote = image_quotes[rand_num]
+    content="""
+    <img src="http://127.0.0.1/rolemodels/%s" /><br>
+    <i>%s</i><br>
+    &mdash; %s
+    <br><br>
+    Still want to continue? <br>
+    <form action="http://127.0.0.1%s" method="post">
+    <input type="hidden" name="host" value="%s">
+    <input type="submit" name="continuePage" value="Yes" />
+    <input type="submit" name="continuePage" value="No" />
+    </form>
+    """%(image_path, selected_quote, self.role_model.name, request.path, request.target_host)
+    return content
   
   def undeter_requested(self, request):
-    return 'Not yet implemented'
+    userAns = request.post['continuePage']
+    if userAns == 'Yes':
+      return True
+    else:
+      content = """
+      You've made a wise decision. I admire your restraint.
+      """
+      return content
 
 class BenefitDeterrent(AbstractDeterrent):
   def render(self, request):

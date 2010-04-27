@@ -214,7 +214,7 @@ class Filter(object):
       deterrent_type = int(raw_rule['Deterrents']['Method'])
       if deterrent_type == DET_TYPE_ROLES:
         deterrent = DeterrentFactory.deterrent_for_type(deterrent_type,
-          raw_rule['Deterrents']['RoleModelName'])
+          self.role_models[raw_rule['Deterrents']['RoleModelName']])
       else:
         deterrent = DeterrentFactory.deterrent_for_type(deterrent_type)
       self.rules[address] = RuleFactory.rule_for_dict(self, address, deterrent, raw_rule['BlockConfig'])
