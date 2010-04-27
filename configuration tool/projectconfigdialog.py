@@ -248,13 +248,14 @@ class ProjectConfigDialog():
 
 	# Blacklist / Whitelist
 	self.intListType= IntVar(value=1)
-	fRadios=Frame(fWebsites)
+	"""fRadios=Frame(fWebsites)
 	rbRadios = []
 	rbRadios.append(Radiobutton(fRadios,text="Whitelist", variable=self.intListType,value=LIST_TYPE_WHITELIST))
 	rbRadios.append(Radiobutton(fRadios,text="Blacklist", variable=self.intListType,value=LIST_TYPE_BLACKLIST))
 	rbRadios[0].grid(row=0, column=0)
 	rbRadios[1].grid(row=0, column=1)
 	fRadios.grid(row=6,column=0)
+        """
 
 	fWebsites.grid(row=3,column=0)
 	
@@ -329,6 +330,7 @@ class ProjectConfigDialog():
 
 	self.lbRoleModels= Listbox(fDets, exportselection=0)
 	self.lbRoleModels.grid(row=4,column=0)
+        self.lbRoleModels.bind("<Double-Button-1>", lambda e: self.roleWindowEDIT())
 	
 	roleFrame=Frame(fDets)
 	bAddWindow=Button(roleFrame,text="Add New")
