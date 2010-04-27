@@ -234,7 +234,7 @@ class Filter(object):
   
   def website_requested(self, address, request):
     try:
-      return self.rules[address].deterrent.render(request)
+      return self._html_wrap(self.rules[address].deterrent.render(request))
     except KeyError:
       return "Host not supposed to be used with filter: %s"%address
   
@@ -247,7 +247,7 @@ class Filter(object):
         rule.undeterred()
         return True
       else:
-        return ret
+        return self._html_wrap(ret)
     except KeyError:
       return "Host not supposed to be used with filter: %s"%address
   
@@ -265,6 +265,19 @@ class Filter(object):
   def unblock(self, address):
     self.hosts.remove(address)
     self.hosts.save()
+  
+  def _html_wrap(self, body):
+    title="Pineapple Web Filter"
+    blocked="BLOCKED!"
+    content="""
+    <html><head><title>%s</title></head><body>
+    <DIV ALIGN=CENTER>
+    <h1>%s<br>%s</h1>
+    %s
+    </div>
+    </body></html>
+      """
+    return '%s'%(content%(title,title,blocked,body))
 
 if __name__ == '__main__':
   f = Filter("configs/sampler")
