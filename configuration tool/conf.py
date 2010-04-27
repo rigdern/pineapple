@@ -125,8 +125,8 @@ class ProjectConfig:
 	
     def openProject(self):
 	pjname=self.projectsList[int(self.lbProjects.curselection()[0])]
-	infile = open(PROJECT_DIR+pjname)
-	if infile != None:
+        try:
+            infile = open(PROJECT_DIR+pjname)
             self.mySites = pickle.load(infile)
             if self.mySites == None or len(self.mySites) == 0:
                 return
@@ -137,16 +137,21 @@ class ProjectConfig:
                 self.pcd.lbSiteList.insert(END, k['url'])
             self.pcd.eProjName.delete(0, END)
             self.pcd.eProjName.insert(END, pjname)
+        except:
+            print "Error opening project configuration"
 
     def getProjects(self):
 	self.projectsList=[]
 	self.lbProjects.delete(0,END)
-	pro=os.listdir(PROJECT_DIR)
+        if os.path.exists(PROJECT_DIR):
+            pro=os.listdir(PROJECT_DIR)
+            for i in pro:
+                self.projectsList.append(i)
+                self.lbProjects.insert(END, i)
+        else:
+            os.makedirs(PROJECT_DIR)
+
 	
-	for i in pro:
-            file=open(PROJECT_DIR+i)
-            self.projectsList.append(i)
-            self.lbProjects.insert(END,i)
 	
 		
 def main():
