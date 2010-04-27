@@ -157,7 +157,7 @@ class HostsFile(object):
   UNIX_PATH = '/etc/hosts'
   WINDOWS_PATH = 'C:\\Windows\\System32\\Drivers\\etc\\hosts'
   def __init__(self):
-    if os.uname()[0] == 'Darwin':
+    if hasattr(os, 'uname'):
       self.path = HostsFile.UNIX_PATH
     else:
       self.path = HostsFile.WINDOWS_PATH
