@@ -179,7 +179,7 @@ class HostsFile(object):
     self._write_hosts(self.hosts, self.path)
   
   def restore(self):
-    fp = open('/etc/hosts', 'w')
+    fp = open(self.path, 'w')
     fp.write(self.orig_hosts_data)
     fp.close()
   
@@ -233,7 +233,7 @@ class Filter(object):
     try:
       return self._html_wrap(self.rules[request.target_host].deterrent.render(request))
     except KeyError:
-      return "Host not supposed to be used with filter: %s"%address
+      return "Host not supposed to be used with filter: %s"%request.target_host
   
   def undeter_requested(self, request):
     try:
