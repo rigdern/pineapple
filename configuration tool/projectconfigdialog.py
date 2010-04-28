@@ -5,6 +5,7 @@ import tkMessageBox
 import os
 import pickle
 import shutil
+from  tkMessageBox import *
 
 
 
@@ -13,12 +14,15 @@ class ProjectConfigDialog():
         self.projectconfig = projconfig
         self.lastselection = None
         self.build_layout()
+		
+	
+		
 
     def removeSite(self): 
 	site=self.SiteStr.get()
 	oldSites=self.lbSiteList.curselection()
 	for i in oldSites:
-            if self.projectconfig.mySites['url'] == site:
+            if self.projectconfig.mySites[int(i)]['url'] == site:
 		self.lbSiteList.delete(i)
 		del self.projectconfig.mySites[int(i)]
 
@@ -209,7 +213,7 @@ class ProjectConfigDialog():
 
 	# Placeholder for Help menu
 	helpmenu = Menu(menubar, tearoff=0)
-	helpmenu.add_command(label="About")
+	helpmenu.add_command(label="About", command = lambda: showinfo( "Pineapple!", "Pineapple is a filtering program for\n people with short attention spans"))
 	menubar.add_cascade(label="Help", menu=helpmenu)
 	
 	# display the menu
