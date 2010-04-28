@@ -1,7 +1,7 @@
 # file: conf.py
 
 import sys
-sys.path += ['.']
+sys.path += ['..']
 
 from Tkinter import *
 from projectconfigdialog import *
@@ -70,11 +70,13 @@ class ProjectConfig:
             self.getProjects()
 
     def dEditProj(self):
-	self.pcd = ProjectConfigDialog(self)
-        self.openProject()
+		self.mySites = []
+		self.pcd = ProjectConfigDialog(self)
+		self.openProject()
 
     def dNewProj(self):
-        self.pcd = ProjectConfigDialog(self)
+		self.mySites = []
+		self.pcd = ProjectConfigDialog(self)
 	
     def dDeleteProj(self):
 	pass
@@ -86,6 +88,7 @@ class ProjectConfig:
     def projectWindow(self):
 
 	self.projectsWindow = Tk()
+	self.projectsWindow.title("Pineapple!")
 	
 	lProjects=Label(self.projectsWindow, text="Projects")
 	lProjects.grid(row=0,column=0,sticky=W, )
