@@ -50,17 +50,6 @@ class ProjectConfig:
         self.pcd.lbSiteList.insert(END, siteconfig['url'])
         self.pcd.clearAllFields()
 
-    def openFile(self): 
-        infile = tkFileDialog.askopenfile(parent=setting,mode='rb',title='Choose a configuration file to open')
-	if infile != None:
-            self.mySites = pickle.load(infile)
-            if self.mySites == None or len(self.mySites) == 0:
-                return
-            print self.mySites
-            self.pcd.lbSiteList.delete(0, END)
-            for k in self.mySites:
-                self.pcd.lbSiteList.insert(END, k['url'])
-
     def saveFile(self): 
 	fileName = self.pcd.eProjName.get()
 	if len(fileName) > 1:

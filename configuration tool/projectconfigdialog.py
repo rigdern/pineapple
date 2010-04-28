@@ -72,9 +72,10 @@ class ProjectConfigDialog():
 
     def poll(self): 
 	currentselection = self.lbSiteList.curselection()
-	if currentselection != self.lastselection:
+	if currentselection != self.lastselection or self.clickwaiting:
 		self.lastselection = currentselection
-		self.list_selection_changed(currentselection)
+                self.list_selection_changed(currentselection)
+                self.set_click_waiting(0)
 	self.lbSiteList.after(200, self.poll)
 
     def list_selection_changed(self, selection): 
@@ -100,7 +101,7 @@ class ProjectConfigDialog():
 		for i in range(0, len(self.projectconfig.myRolesList)):
 			if self.projectconfig.myRolesList[i]['Name'] == roleName:
 				self.lbRoleModels.selection_set(i)
-	self.lookForEdit(None)
+	self.lookForEdit(1)
 
     def commitRoleModelsToFile(self): 
 	fileOpen = open(ROLE_FILE_NAME, 'wb')
@@ -114,26 +115,14 @@ class ProjectConfigDialog():
 	self.imageName=""
 	self.myRoleWindow()
 		
-    def lookForEdit(self, event): 
-	return
-	prevvalue = self.SiteStr.get()
-	if event != None:
-		if not event.char.isalnum() and event.char != '.':
-			return
-		self.SiteStr.insert(prevvalue + event.char)
-
-	isadd = 1
-	for site in self.projectconfig.mySites:
+    def lookForEdit(self, setnow): 
+        if setnow:
+            for site in self.projectconfig.mySites:
 		if self.SiteStr.get() == site['url']:
-			bSite.config(text="Edit Site")
-			isadd = 0
-			break
-	if isadd:
-		bSite.config(text="Add Site")
-		
-
-	return "break"
-
+                    self.bSite.config(text="Edit Site")
+                    return
+        
+        self.bSite.config(text="Add Site")
 
     def rolesCommit(self): 
 	deterrentconfig = {}
@@ -198,6 +187,9 @@ class ProjectConfigDialog():
 	but=Button(self.top,text="commit",command=self.rolesCommit)
 	but.grid(row=6,column=0)
 
+    def set_click_waiting(self, num):
+        print "setting to ", num
+        self.clickwaiting = num
 
     def build_layout(self):
 	self.setting= Toplevel(self.projectconfig.projectsWindow)
@@ -205,8 +197,8 @@ class ProjectConfigDialog():
 
 	# create a pulldown menu, and add it to the menu bar
 	filemenu = Menu(menubar, tearoff=0)
-	filemenu.add_command(label="Open", command=self.projectconfig.openFile)
-	filemenu.add_command(label="Save", command=self.projectconfig.saveFile)
+#	filemenu.add_command(label="Open", command=self.projectconfig.openFile)
+#	filemenu.add_command(label="Save", command=self.projectconfig.saveFile)
 	filemenu.add_separator()
 	filemenu.add_command(label="Exit", command=self.setting.quit)
 	menubar.add_cascade(label="File", menu=filemenu)
@@ -227,19 +219,22 @@ class ProjectConfigDialog():
 	laWeb= Label(fWebsites, text="Websites")
 	laWeb.grid(row=0, column=0)
 
+        self.clickwaiting = 0
+
 	self.SiteStr = StringVar()
 	entSite = Entry(frame, textvariable=self.SiteStr)
 	entSite.grid(row=0, column=1)
-	entSite.bind('<Key>', self.lookForEdit)
+	entSite.bind('<Key>', lambda e: self.lookForEdit(0))
 
 	laSite = Label(frame, text="Address")
 	laSite.grid(row=0,column=0)
 
-	bSite = Button(frame, text="Add Site", command=self.projectconfig.addSite)
-	bSite.grid(row=0,column=2)
+	self.bSite = Button(frame, text="Add Site", command=self.projectconfig.addSite)
+	self.bSite.grid(row=0,column=2)
 
 	self.lbSiteList=Listbox(fWebsites,selectmode=EXTENDED, exportselection=0)
 	self.lbSiteList.grid(row=3, column=0)
+        self.lbSiteList.bind('<Button-1>', lambda e: self.set_click_waiting(1))
 
 	bRemoveSite = Button(fWebsites, text="Remove Site", command=self.removeSite)
 	bRemoveSite.grid(row=4,column=0)
