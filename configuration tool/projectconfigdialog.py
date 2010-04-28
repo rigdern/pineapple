@@ -2,11 +2,12 @@ from Tkinter import *
 from constants import *
 
 import tkMessageBox
+import tkFileDialog
 import os
 import pickle
 import shutil
 from  tkMessageBox import *
-
+from PIL import Image, ImageTk
 
 
 class ProjectConfigDialog():
@@ -36,19 +37,17 @@ class ProjectConfigDialog():
 			for role in self.projectconfig.myRolesList:
 				self.lbRoleModels.insert(END, role['Name'])
 
-    def loadRoleModel(self): # TODO do we still need this?
+    def loadRoleModel(self): 
 	self.imageFile=tkFileDialog.askopenfilename(parent=self.setting,title='Choose a file')
 	if self.imageFile!=None:
-		shutil.copy(self.imageFile,PICS_DIR)
+            shutil.copy(self.imageFile,PICS_DIR)
 		
-		self.imageFile=PICS_DIR+os.path.basename(self.imageFile)
-		myPic=PhotoImage(file=self.imageFile)
-		self.lbRolePrev.config(image=myPic)
-		self.lbRolePrev.image = myPic
-		self.top.focus_set()
-		
-	else:
-		print "error"
+            self.imageFile=os.getcwd()+'/'+PICS_DIR+os.path.basename(self.imageFile)
+            myPic = ImageTk.PhotoImage(Image.open(self.imageFile))
+            self.lbRolePrev.config(image=myPic)
+            self.lbRolePrev.image = myPic
+            self.top.focus_set()
+
 
     def removeRoleModel(self):
         selection = self.lbRoleModels.curselection()
@@ -105,6 +104,7 @@ class ProjectConfigDialog():
 
 	deterrentmethod = configobj['Deterrents']['Method']
 	self.intDetType.set(deterrentmethod)
+        self.lbRoleModels.select_clear(0, END)
 	if deterrentmethod == DET_TYPE_ROLES:
 		roleName = configobj['Deterrents']['RoleModelName']
 		for i in range(0, len(self.projectconfig.myRolesList)):
@@ -176,11 +176,12 @@ class ProjectConfigDialog():
         self.lbRolePrev.grid(row=2,column=0,sticky=W)
         
         try:
-            imageLab=PhotoImage(file=self.imageFile)
-            self.lbRolePrev.config(image=imageLab)
-            self.lbRolePrev.image = imageLab
+            if self.imageFile != "":
+                imageLab = ImageTk.PhotoImage(Image.open(self.imageFile))
+                self.lbRolePrev.config(image=imageLab)
+                self.lbRolePrev.image = imageLab
         except:
-            showerror("Error loading image", "Could not load the image: " + imageFile)
+            showerror("Error loading image", "Could not load the image: " + self.imageFile)
 	
 	bSetPicture=Button(self.top,text="Select Picture", command=self.loadRoleModel)
 	bSetPicture.grid(row=4,column=2)

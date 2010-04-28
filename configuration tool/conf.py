@@ -114,7 +114,7 @@ class ProjectConfig:
             self.pcd.eProjName.delete(0, END)
             self.pcd.eProjName.insert(END, pjname)
         except:
-            print "Error opening project configuration"
+            showerror("Error opening project configuration", "Unable to open project configuration file")
 
     def getProjects(self):
 	self.projectsList=[]
