@@ -16,9 +16,6 @@ class ProjectConfigDialog():
         self.lastselection = None
         self.build_layout()
 		
-	
-		
-
     def removeSite(self): 
 	site=self.SiteStr.get()
 	oldSites=self.lbSiteList.curselection()
@@ -49,7 +46,6 @@ class ProjectConfigDialog():
             self.lbRolePrev.image = myPic
             self.top.focus_set()
 
-
     def removeRoleModel(self):
         selection = self.lbRoleModels.curselection()
         if len(selection) != 1:
@@ -64,14 +60,14 @@ class ProjectConfigDialog():
 	self.intDetType.set(0)
 	self.intTimeType.set(0)
 	self.BreakLengthStr.set('')
-	self.liTime.select_clear(0, END)
+	self.WaitTimeStr.set('')
+        self.liTime.select_clear(0, END)
 	self.lbRoleModels.selection_clear(0, END)
         self.lookForEdit(0)
 
     def roleWindowEDIT(self):
-	# TODO what if more than one entry is highlighted?
 	selectedIndices = self.lbRoleModels.curselection()
-	if len(selectedIndices) == 0:
+	if len(selectedIndices) != 1:
 		return
 	
 	roleModel = self.projectconfig.myRolesList[int(selectedIndices[0])]
@@ -92,14 +88,16 @@ class ProjectConfigDialog():
 	if len(selection) < 1:
 		return
 	self.BreakLengthStr.set('')
-	configobj = self.projectconfig.mySites[int(selection[0])]
+	self.WaitTimeStr.set('')
+        configobj = self.projectconfig.mySites[int(selection[0])]
 	self.liTime.select_clear(0, END)
 	self.SiteStr.set(configobj['url'])
 	blockmethod = configobj['BlockConfig']['Method']
 	self.rbTimeRadios[blockmethod].select()
 	if (blockmethod == TIME_TYPE_ALLOW_BREAKS):
 		self.BreakLengthStr.set(str(configobj['BlockConfig']['BreakLength']))
-	elif (blockmethod == TIME_TYPE_BLOCK_SCHEDULING):
+                self.WaitTimeStr.set(str(configobj['BlockConfig']['TimeBetweenBreaks']))
+        elif (blockmethod == TIME_TYPE_BLOCK_SCHEDULING):
 		breaks = configobj['BlockConfig']['AllowedTime']
 		for allowedtime in breaks:
 			self.liTime.selection_set(allowedtime)
@@ -155,9 +153,7 @@ class ProjectConfigDialog():
         self.commitRoleModelsToFile()
 	self.top.destroy()
 
-
     def myRoleWindow(self): 
-	
 	self.top=Toplevel(self.setting)
 	
 	lbRoleMo=Label(self.top,text="Role Model")
@@ -210,9 +206,6 @@ class ProjectConfigDialog():
 	# create a pulldown menu, and add it to the menu bar
 	filemenu = Menu(menubar, tearoff=0)
 	filemenu.add_separator()
-	#filemenu.add_command(label="Exit", command=self.setting.quit)
-	#enubar.add_cascade(label="File", menu=filemenu)
-	
 
 	# Placeholder for Help menu
 	helpmenu = Menu(menubar, tearoff=0)
@@ -250,8 +243,6 @@ class ProjectConfigDialog():
 	bRemoveSite = Button(fWebsites, text="Remove Site", command=self.removeSite)
 	bRemoveSite.grid(row=4,column=0)
 	
-	
-
 	self.poll() # Wait for user to click on site in list -- populate right side accordingly
 
 	# Blacklist / Whitelist
@@ -266,7 +257,6 @@ class ProjectConfigDialog():
         """
 
 	fWebsites.grid(row=3,column=0)
-	
 	
 	# Blocking Method
 	fBlock= Frame(self.setting)
@@ -294,6 +284,13 @@ class ProjectConfigDialog():
 	entBreakLength=Entry(fBreakFrame, textvariable=self.BreakLengthStr)
 	entBreakLength.grid(row=2,column=1)
 
+        lbWaitTime = Label(fBreakFrame, text="Time Between Breaks")
+        lbWaitTime.grid(row=3, column=0, sticky=E, padx=2)
+
+        self.WaitTimeStr = StringVar()
+        entWaitTime = Entry(fBreakFrame, textvariable=self.WaitTimeStr)
+        entWaitTime.grid(row=3, column=1)
+
 	fBreakFrame.grid(row=3,column=0,sticky=E,padx=20)
 
 	# Blocking Method / Block Scheduling
@@ -315,7 +312,6 @@ class ProjectConfigDialog():
 	fBlock.grid(row=3,column=4)
 	
 	#Deterrents
-	
 	fDeterrents= Frame(self.setting)
 	self.intDetType=IntVar()
 	
