@@ -26,6 +26,7 @@ class ProjectConfigDialog():
             if self.projectconfig.mySites[int(i)]['url'] == site:
 		self.lbSiteList.delete(i)
 		del self.projectconfig.mySites[int(i)]
+        self.lookForEdit(0)
 
     def roleListLoad(self): 
 	self.projectconfig.myRolesList = []
@@ -65,6 +66,7 @@ class ProjectConfigDialog():
 	self.BreakLengthStr.set('')
 	self.liTime.select_clear(0, END)
 	self.lbRoleModels.selection_clear(0, END)
+        self.lookForEdit(0)
 
     def roleWindowEDIT(self):
 	# TODO what if more than one entry is highlighted?

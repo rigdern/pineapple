@@ -46,8 +46,18 @@ class ProjectConfig:
 
         print siteconfig
 
-        self.mySites.append(siteconfig)
-        self.pcd.lbSiteList.insert(END, siteconfig['url'])
+        # check if it already exists in list. If so, replace it
+        found = 0
+        for i in range(0, len(self.mySites)):
+            if self.mySites[i]['url'] == siteconfig['url']:
+                found = 1
+                self.mySites[i] = siteconfig
+                break
+
+        if not found:
+            self.mySites.append(siteconfig)
+            self.pcd.lbSiteList.insert(END, siteconfig['url'])
+
         self.pcd.clearAllFields()
 
     def saveFile(self): 
