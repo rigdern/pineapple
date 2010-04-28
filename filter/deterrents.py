@@ -17,7 +17,7 @@ class DenyDeterrent(AbstractDeterrent):
 
 class StrChrDeterrent(AbstractDeterrent):
   def render(self, request):
-    s = ''.join([random.choice(string.lowercase+string.uppercase+string.digits) for x in xrange(50)])
+    s = ''.join([random.choice(string.lowercase+string.uppercase) for x in xrange(32)])
     s_hash = hashlib.sha1(s).hexdigest()
     font=ImageFont.load_default()
     text_width, text_height = font.getsize(s)
