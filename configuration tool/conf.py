@@ -40,7 +40,7 @@ class ProjectConfig:
         if dettype == DET_TYPE_ROLES:
             rowindex = self.pcd.lbRoleModels.curselection()
             if len(rowindex) != 1:
-                print "error: must select a role model"
+                showerror("Must select role model", "You must select a role model")
                 return
             siteconfig['Deterrents']['RoleModelName'] = self.myRolesList[int(rowindex[0])]['Name']
 

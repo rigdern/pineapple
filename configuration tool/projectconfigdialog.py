@@ -1,7 +1,7 @@
 from Tkinter import *
 from constants import *
 
-import tkFileDialog
+import tkMessageBox
 import os
 import pickle
 import shutil
@@ -32,7 +32,7 @@ class ProjectConfigDialog():
 			for role in self.projectconfig.myRolesList:
 				self.lbRoleModels.insert(END, role['Name'])
 
-    def loadRoleModel(self): 
+    def loadRoleModel(self): # TODO do we still need this?
 	self.imageFile=tkFileDialog.askopenfilename(parent=self.setting,title='Choose a file')
 	if self.imageFile!=None:
 		shutil.copy(self.imageFile,PICS_DIR)
@@ -99,7 +99,6 @@ class ProjectConfigDialog():
 		for allowedtime in breaks:
 			self.liTime.selection_set(allowedtime)
 
-	print "method: ", configobj
 	deterrentmethod = configobj['Deterrents']['Method']
 	self.intDetType.set(deterrentmethod)
 	if deterrentmethod == DET_TYPE_ROLES:
@@ -177,7 +176,7 @@ class ProjectConfigDialog():
             self.lbRolePrev.config(image=imageLab)
             self.lbRolePrev.image = imageLab
         except:
-            print "error loading image"
+            showerror("Error loading image", "Could not load the image: " + imageFile)
 	
 	bSetPicture=Button(self.top,text="Select Picture", command=self.loadRoleModel)
 	bSetPicture.grid(row=4,column=2)
@@ -195,7 +194,6 @@ class ProjectConfigDialog():
 	but.grid(row=6,column=0)
 
     def set_click_waiting(self, num):
-        print "setting to ", num
         self.clickwaiting = num
 
     def build_layout(self):
