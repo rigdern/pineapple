@@ -13,7 +13,7 @@ DET_TYPE_EXPLAIN = 3
 PROJECT_DIR="./proj/"
 PROJECT_EXT=".cf"
 
-
+PICS_DIR="../webroot/rolemodels/"
 picRole=0
 
 ROLE_FILE_NAME="myRoles"

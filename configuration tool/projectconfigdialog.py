@@ -4,6 +4,7 @@ from constants import *
 import tkFileDialog
 import os
 import pickle
+import shutil
 
 
 
@@ -34,9 +35,13 @@ class ProjectConfigDialog():
     def loadRoleModel(self): 
 	self.imageFile=tkFileDialog.askopenfilename(parent=self.setting,title='Choose a file')
 	if self.imageFile!=None:
+		shutil.copy(self.imageFile,PICS_DIR)
+		
+		self.imageFile=PICS_DIR+os.path.basename(self.imageFile)
 		myPic=PhotoImage(file=self.imageFile)
 		self.lbRolePrev.config(image=myPic)
 		self.lbRolePrev.image = myPic
+		self.top.focus_set()
 		
 	else:
 		print "error"
@@ -94,6 +99,7 @@ class ProjectConfigDialog():
 		for allowedtime in breaks:
 			self.liTime.selection_set(allowedtime)
 
+	print "method: ", configobj
 	deterrentmethod = configobj['Deterrents']['Method']
 	self.intDetType.set(deterrentmethod)
 	if deterrentmethod == DET_TYPE_ROLES:
@@ -146,6 +152,7 @@ class ProjectConfigDialog():
 
 
     def myRoleWindow(self): 
+	
 	self.top=Toplevel(self.setting)
 	
 	lbRoleMo=Label(self.top,text="Role Model")
@@ -197,11 +204,10 @@ class ProjectConfigDialog():
 
 	# create a pulldown menu, and add it to the menu bar
 	filemenu = Menu(menubar, tearoff=0)
-#	filemenu.add_command(label="Open", command=self.projectconfig.openFile)
-#	filemenu.add_command(label="Save", command=self.projectconfig.saveFile)
 	filemenu.add_separator()
-	filemenu.add_command(label="Exit", command=self.setting.quit)
-	menubar.add_cascade(label="File", menu=filemenu)
+	#filemenu.add_command(label="Exit", command=self.setting.quit)
+	#enubar.add_cascade(label="File", menu=filemenu)
+	
 
 	# Placeholder for Help menu
 	helpmenu = Menu(menubar, tearoff=0)
@@ -357,4 +363,4 @@ class ProjectConfigDialog():
 	bProjCommit.grid(row=0,column=2,)
 	fProjInfo.grid(row=0,column=4)
 	
-	
+	self.setting.title("Project Configuration")
