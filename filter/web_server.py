@@ -1,4 +1,4 @@
-import BaseHTTPServer, SimpleHTTPServer, cgi, os
+import BaseHTTPServer, SimpleHTTPServer, cgi, os, sys
 from filter import Filter
 
 # Changes to the hosts file don't seem to be recoginzed right away. Maybe we
@@ -77,24 +77,34 @@ class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
   do_POST = do_GET = handle_request
 
-flter = Filter('proj/Dude')
-flter.start()
-if not os.path.exists(WEBROOT):
-  old = os.umask(0002)
+def main():
+  global flter
+  
+  if len(sys.argv) != 2:
+    print "Usage: python %s <path-to-project>"%sys.argv[0]
+    sys.exit()
+  
+  flter = Filter(sys.argv[1])
+  flter.start()
+  if not os.path.exists(WEBROOT):
+    old = os.umask(0002)
+    try:
+      os.makedirs(WEBROOT)
+    finally:
+      os.umask(old)
+  addr = ('127.0.0.1', 80)
+  httpd = BaseHTTPServer.HTTPServer(addr, RequestHandler)
   try:
-    os.makedirs(WEBROOT)
+    print 'serving'
+    httpd.serve_forever()
+  except KeyboardInterrupt:
+    print 'goodbye'
   finally:
-    os.umask(old)
-addr = ('127.0.0.1', 80)
-httpd = BaseHTTPServer.HTTPServer(addr, RequestHandler)
-try:
-  print 'serving'
-  httpd.serve_forever()
-except KeyboardInterrupt:
-  print 'goodbye'
-finally:
-  flter.shut_down()
-  for file_name in os.listdir(WEBROOT):
-    if file_name.endswith(".JPEG"):
-      os.remove(os.path.join(WEBROOT, file_name))
-print 'done'
+    flter.shut_down()
+    for file_name in os.listdir(WEBROOT):
+      if file_name.endswith(".JPEG"):
+        os.remove(os.path.join(WEBROOT, file_name))
+  print 'done'
+
+if __name__ == '__main__':
+  main()
