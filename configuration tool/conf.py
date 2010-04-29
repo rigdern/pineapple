@@ -114,7 +114,7 @@ class ProjectConfig:
         if len(selectedindex) == 1:
             if askyesno("Employ Project?", "Are you sure you want to begin filtering content?"):
                 filename = self.projects_list[int(selectedindex[0])]
-                self.web_server_process = Popen(['sudo', 'python', '../filter/web_server.py', PROJECT_DIR + filename])
+                self.web_server_process = Popen(['sudo', 'python', './filter/web_server.py', PROJECT_DIR + filename])
 
     """ Called when user clicks "Terminate" from main project list menu"""
     def terminate_project(self):

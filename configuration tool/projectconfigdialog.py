@@ -25,6 +25,7 @@ class ProjectConfigDialog():
         self.lastselection = None
         self.build_layout()
 
+    """ Called when user clicks "Remove Site." Deletes site from the list. """
     def remove_site(self):
         site = self.SiteStr.get()
         oldSites = self.lbSiteList.curselection()
@@ -34,6 +35,8 @@ class ProjectConfigDialog():
                 del self.projectconfig.mySites[int(i)]
         self.look_for_site_field_edit(0)
 
+    """ Called once the project config dialog is created at the end of build_layout().
+    Populates the list of role models from the file"""
     def load_role_model_list(self):
         self.projectconfig.myRolesList = []
         self.lbRoleModels.delete(0, END)
@@ -44,7 +47,9 @@ class ProjectConfigDialog():
                 for role in self.projectconfig.myRolesList:
                     self.lbRoleModels.insert(END, role['Name'])
 
-    def load_role_model(self):
+    """ Called when user clicks "Load Picture" from role model window. Prompts user for file
+    of image and saves it for future use when saving"""
+    def load_role_model_picture(self):
         self.imageFile = tkFileDialog.askopenfilename(parent=self.setting, title='Choose a file')
         if self.imageFile != None:
             shutil.copy(self.imageFile, PICS_DIR)
@@ -55,6 +60,7 @@ class ProjectConfigDialog():
             self.lbRolePrev.image = myPic
             self.top.focus_set()
 
+    """ Called when user selects "Remove" under role model list. Removes role model from listing"""
     def remove_role_model(self):
         selection = self.lbRoleModels.curselection()
         if len(selection) != 1:
@@ -65,6 +71,8 @@ class ProjectConfigDialog():
         self.projectconfig.myRolesList.pop(selectedIndex)
         self.save_role_model_list()
 
+    """ Clears all form elements. Done after adding a site when user should no longer
+    see previous values"""
     def clear_all_fields(self):
         self.intDetType.set(0)
         self.intTimeType.set(0)
@@ -74,6 +82,9 @@ class ProjectConfigDialog():
         self.lbRoleModels.selection_clear(0, END)
         self.look_for_site_field_edit(0)
 
+    """ Called when user wants to edit a previously configured role model. Sets member variables
+    relating to information about this role model then calls role_model_window(). This function 
+    populate the window fields with these values."""
     def edit_role_model_window(self):
         selectedIndices = self.lbRoleModels.curselection()
         if len(selectedIndices) != 1:
@@ -85,6 +96,10 @@ class ProjectConfigDialog():
         self.imageFile = roleModel['ImagePath']
         self.role_model_window()
 
+    """ Checks every 200ms to see if the site field has changed. This is used to implement the
+    'edit site' function. When the site field is a site already listed, the add site button changes
+    to 'edit site.' If they start changing the field after this, we want to change the button back
+    to saying "add site." """
     def poll(self):
         currentselection = self.lbSiteList.curselection()
         if currentselection != self.lastselection or self.clickwaiting:
@@ -92,7 +107,26 @@ class ProjectConfigDialog():
             self.list_selection_changed(currentselection)
             self.set_click_waiting(0)
         self.lbSiteList.after(200, self.poll)
+        
+    """ Used to help with 'edit site' functionality. Called when user clicks in site listbox. """
+    def set_click_waiting(self, num):
+        self.clickwaiting = num
 
+
+    """ When the user clicks on a site, we call this to change the button to say 'edit site'
+    When the field changes after that, we check if this still makes sense. If not, we switch
+    back to "add site" """
+    def look_for_site_field_edit(self, setnow):
+        if setnow:
+            for site in self.projectconfig.mySites:
+                if self.SiteStr.get() == site['url']:
+                    self.bSite.config(text="Edit Site")
+                    return
+
+        self.bSite.config(text="Add Site")
+
+    """ When the user clicks on a value in the site list, we should populate the form values
+    with those related to this site policy"""
     def list_selection_changed(self, selection):
         if len(selection) < 1:
             return
@@ -101,6 +135,8 @@ class ProjectConfigDialog():
         configobj = self.projectconfig.mySites[int(selection[0])]
         self.liTime.select_clear(0, END)
         self.SiteStr.set(configobj['url'])
+
+        # Set block config piece of site policy
         blockmethod = configobj['BlockConfig']['Method']
         self.rbTimeRadios[blockmethod].select()
         if (blockmethod == TIME_TYPE_ALLOW_BREAKS):
@@ -111,6 +147,7 @@ class ProjectConfigDialog():
             for allowedtime in breaks:
                 self.liTime.selection_set(allowedtime)
 
+        # Set deterrent piece of site policy
         deterrentmethod = configobj['Deterrents']['Method']
         self.intDetType.set(deterrentmethod)
         self.lbRoleModels.select_clear(0, END)
@@ -121,27 +158,24 @@ class ProjectConfigDialog():
                     self.lbRoleModels.selection_set(i)
         self.look_for_site_field_edit(1)
 
+    """ Save the current list of role models and their corresponding configurations
+    to the disk for future use"""
     def save_role_model_list(self):
         fileOpen = open(ROLE_FILE_NAME, 'wb')
         if fileOpen != None:
             pickle.dump(self.projectconfig.myRolesList, fileOpen)
             fileOpen.close()
 
+    """ Open role model window. Because form fields are populated with imageText, imageFile, 
+    and imageName members, clear these first"""
     def add_role_model_window(self):
         self.imageText = []
         self.imageFile = ""
         self.imageName = ""
         self.role_model_window()
 
-    def look_for_site_field_edit(self, setnow):
-        if setnow:
-            for site in self.projectconfig.mySites:
-                if self.SiteStr.get() == site['url']:
-                    self.bSite.config(text="Edit Site")
-                    return
-
-        self.bSite.config(text="Add Site")
-
+    """ Called when committing a role model. Save the configuration internally and make
+    entry in list if it's not already there"""
     def save_role_model(self):
         deterrentconfig = {}
         deterrentconfig['Name'] = self.eRoleName.get()
@@ -162,6 +196,8 @@ class ProjectConfigDialog():
         self.save_role_model_list()
         self.top.destroy()
 
+    """ Mostly gui implementation of role model window. We populate the name, text, and picture
+    if this is an edit -- in that case the 3 corresponding members are set to non blank values"""
     def role_model_window(self):
         self.top = Toplevel(self.setting)
 
@@ -190,7 +226,7 @@ class ProjectConfigDialog():
         except:
             showerror("Error loading image", "Could not load the image: " + self.imageFile)
 
-        bSetPicture = Button(self.top, text="Select Picture", command=self.load_role_model)
+        bSetPicture = Button(self.top, text="Select Picture", command=self.load_role_model_picture)
         bSetPicture.grid(row=4, column=2)
 
         lbQuotes = Label(self.top, text="Quotes")
@@ -205,9 +241,7 @@ class ProjectConfigDialog():
         but = Button(self.top, text="commit", command=self.save_role_model)
         but.grid(row=6, column=0)
 
-    def set_click_waiting(self, num):
-        self.clickwaiting = num
-
+    """ GUI implementation of the main project config dialog"""
     def build_layout(self):
         self.setting = Toplevel(self.projectconfig.projects_dialog)
         menubar = Menu(self.setting)
