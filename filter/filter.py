@@ -52,8 +52,10 @@ class TimeToleranceRule(AbstractRule):
   deterrent."""
   def __init__(self, flter, address, deterrent, params):
     AbstractRule.__init__(self, flter, address, deterrent, params)
-    self.allowed_duration = int(params['BreakLength'])*60
-    self.block_duration = int(params['TimeBetweenBreaks'])*60
+    try:
+      self.allowed_duration = int(params['BreakLength'])*60
+    except TypeError:
+      self.allowed_duration = 1
     self.timer = None
   
   def enable(self):
@@ -214,8 +216,9 @@ class Filter(object):
   
   def load_role_models(self, path):
     self.role_models = {}
-    for model in pickle.load(open(path)):
-      self.role_models[model['Name']] = RoleModel(model)
+    if os.path.exists(path):
+      for model in pickle.load(open(path)):
+        self.role_models[model['Name']] = RoleModel(model)
   
   def load_rules(self, config_path):
     self.rules = {}
