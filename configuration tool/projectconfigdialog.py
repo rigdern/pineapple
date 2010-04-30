@@ -25,8 +25,8 @@ class ProjectConfigDialog():
         self.lastselection = None
         self.build_layout()
 
-    """ Called when user clicks "Remove Site." Deletes site from the list. """
     def remove_site(self):
+        """ Called when user clicks "Remove Site." Deletes site from the list. """
         site = self.SiteStr.get()
         oldSites = self.lbSiteList.curselection()
         for i in oldSites:
@@ -35,9 +35,9 @@ class ProjectConfigDialog():
                 del self.projectconfig.mySites[int(i)]
         self.look_for_site_field_edit(0)
 
-    """ Called once the project config dialog is created at the end of build_layout().
-    Populates the list of role models from the file"""
     def load_role_model_list(self):
+        """ Called once the project config dialog is created at the end of build_layout().
+        Populates the list of role models from the file"""
         self.projectconfig.myRolesList = []
         self.lbRoleModels.delete(0, END)
         if os.path.isfile(ROLE_FILE_NAME):
@@ -47,9 +47,9 @@ class ProjectConfigDialog():
                 for role in self.projectconfig.myRolesList:
                     self.lbRoleModels.insert(END, role['Name'])
 
-    """ Called when user clicks "Load Picture" from role model window. Prompts user for file
-    of image and saves it for future use when saving"""
     def load_role_model_picture(self):
+        """ Called when user clicks "Load Picture" from role model window. Prompts user for file
+        of image and saves it for future use when saving"""
         self.imageFile = tkFileDialog.askopenfilename(parent=self.setting, title='Choose a file')
         if self.imageFile != None:
             shutil.copy(self.imageFile, PICS_DIR)
@@ -60,8 +60,8 @@ class ProjectConfigDialog():
             self.lbRolePrev.image = myPic
             self.top.focus_set()
 
-    """ Called when user selects "Remove" under role model list. Removes role model from listing"""
     def remove_role_model(self):
+        """ Called when user selects "Remove" under role model list. Removes role model from listing"""
         selection = self.lbRoleModels.curselection()
         if len(selection) != 1:
             return
@@ -71,9 +71,9 @@ class ProjectConfigDialog():
         self.projectconfig.myRolesList.pop(selectedIndex)
         self.save_role_model_list()
 
-    """ Clears all form elements. Done after adding a site when user should no longer
-    see previous values"""
     def clear_all_fields(self):
+        """ Clears all form elements. Done after adding a site when user should no longer
+        see previous values"""
         self.intDetType.set(0)
         self.intTimeType.set(0)
         self.BreakLengthStr.set('')
@@ -82,10 +82,10 @@ class ProjectConfigDialog():
         self.lbRoleModels.selection_clear(0, END)
         self.look_for_site_field_edit(0)
 
-    """ Called when user wants to edit a previously configured role model. Sets member variables
-    relating to information about this role model then calls role_model_window(). This function 
-    populate the window fields with these values."""
     def edit_role_model_window(self):
+        """ Called when user wants to edit a previously configured role model. Sets member variables
+        relating to information about this role model then calls role_model_window(). This function 
+        populate the window fields with these values."""
         selectedIndices = self.lbRoleModels.curselection()
         if len(selectedIndices) != 1:
             return
@@ -96,11 +96,11 @@ class ProjectConfigDialog():
         self.imageFile = roleModel['ImagePath']
         self.role_model_window()
 
-    """ Checks every 200ms to see if the site field has changed. This is used to implement the
-    'edit site' function. When the site field is a site already listed, the add site button changes
-    to 'edit site.' If they start changing the field after this, we want to change the button back
-    to saying "add site." """
     def poll(self):
+        """ Checks every 200ms to see if the site field has changed. This is used to implement the
+        'edit site' function. When the site field is a site already listed, the add site button changes
+        to 'edit site.' If they start changing the field after this, we want to change the button back
+        to saying "add site." """
         currentselection = self.lbSiteList.curselection()
         if currentselection != self.lastselection or self.clickwaiting:
             self.lastselection = currentselection
@@ -108,15 +108,15 @@ class ProjectConfigDialog():
             self.set_click_waiting(0)
         self.lbSiteList.after(200, self.poll)
         
-    """ Used to help with 'edit site' functionality. Called when user clicks in site listbox. """
     def set_click_waiting(self, num):
+        """ Used to help with 'edit site' functionality. Called when user clicks in site listbox. """
         self.clickwaiting = num
 
 
-    """ When the user clicks on a site, we call this to change the button to say 'edit site'
-    When the field changes after that, we check if this still makes sense. If not, we switch
-    back to "add site" """
     def look_for_site_field_edit(self, setnow):
+        """ When the user clicks on a site, we call this to change the button to say 'edit site'
+        When the field changes after that, we check if this still makes sense. If not, we switch
+        back to "add site" """
         if setnow:
             for site in self.projectconfig.mySites:
                 if self.SiteStr.get() == site['url']:
@@ -125,9 +125,9 @@ class ProjectConfigDialog():
 
         self.bSite.config(text="Add Site")
 
-    """ When the user clicks on a value in the site list, we should populate the form values
-    with those related to this site policy"""
     def list_selection_changed(self, selection):
+        """ When the user clicks on a value in the site list, we should populate the form values
+        with those related to this site policy"""
         if len(selection) < 1:
             return
         self.BreakLengthStr.set('')
@@ -158,47 +158,48 @@ class ProjectConfigDialog():
                     self.lbRoleModels.selection_set(i)
         self.look_for_site_field_edit(1)
 
-    """ Save the current list of role models and their corresponding configurations
-    to the disk for future use"""
     def save_role_model_list(self):
+        """ Save the current list of role models and their corresponding configurations
+        to the disk for future use"""
         fileOpen = open(ROLE_FILE_NAME, 'wb')
         if fileOpen != None:
             pickle.dump(self.projectconfig.myRolesList, fileOpen)
             fileOpen.close()
 
-    """ Open role model window. Because form fields are populated with imageText, imageFile, 
-    and imageName members, clear these first"""
     def add_role_model_window(self):
+        """ Open role model window. Because form fields are populated with imageText, imageFile, 
+        and imageName members, clear these first"""
         self.imageText = []
         self.imageFile = ""
         self.imageName = ""
         self.role_model_window()
 
-    """ Called when committing a role model. Save the configuration internally and make
-    entry in list if it's not already there"""
     def save_role_model(self):
-        deterrentconfig = {}
-        deterrentconfig['Name'] = self.eRoleName.get()
-        deterrentconfig['ImagePath'] = self.imageFile
-        deterrentconfig['QuotesList'] = self.tbQuotes.get(1.0, END).rstrip().split('\n')
+        """ Called when committing a role model. Save the configuration internally and make
+        entry in list if it's not already there"""
+        if askyesno("Commit changes?", "Are you sure you want to commit changes to this role model?"):
+            deterrentconfig = {}
+            deterrentconfig['Name'] = self.eRoleName.get()
+            deterrentconfig['ImagePath'] = self.imageFile
+            deterrentconfig['QuotesList'] = self.tbQuotes.get(1.0, END).rstrip().split('\n')
+            
+            found = 0
+            for i in range(0, len(self.projectconfig.myRolesList)):
+                if deterrentconfig['Name'] == self.projectconfig.myRolesList[i]['Name']:
+                    self.projectconfig.myRolesList[i] = deterrentconfig
+                    found = 1
+                    break
+                
+            if not found:
+                self.projectconfig.myRolesList.append(deterrentconfig)
+                self.lbRoleModels.insert(END, deterrentconfig['Name'])
+                
+            self.save_role_model_list()
+            self.top.destroy()
 
-        found = 0
-        for i in range(0, len(self.projectconfig.myRolesList)):
-            if deterrentconfig['Name'] == self.projectconfig.myRolesList[i]['Name']:
-                self.projectconfig.myRolesList[i] = deterrentconfig
-                found = 1
-                break
-
-        if not found:
-            self.projectconfig.myRolesList.append(deterrentconfig)
-            self.lbRoleModels.insert(END, deterrentconfig['Name'])
-
-        self.save_role_model_list()
-        self.top.destroy()
-
-    """ Mostly gui implementation of role model window. We populate the name, text, and picture
-    if this is an edit -- in that case the 3 corresponding members are set to non blank values"""
     def role_model_window(self):
+        """ Mostly gui implementation of role model window. We populate the name, text, and picture
+        if this is an edit -- in that case the 3 corresponding members are set to non blank values"""
         self.top = Toplevel(self.setting)
 
         lbRoleMo = Label(self.top, text="Role Model")
@@ -241,8 +242,8 @@ class ProjectConfigDialog():
         but = Button(self.top, text="commit", command=self.save_role_model)
         but.grid(row=6, column=0)
 
-    """ GUI implementation of the main project config dialog"""
     def build_layout(self):
+        """ GUI implementation of the main project config dialog"""
         self.setting = Toplevel(self.projectconfig.projects_dialog)
         menubar = Menu(self.setting)
 
