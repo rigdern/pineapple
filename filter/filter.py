@@ -337,29 +337,3 @@ class Filter(object):
         </body></html>
           """
         return '%s' % (content % (title, title, blocked, body))
-
-if __name__ == '__main__':
-    f = Filter("configs/sampler")
-    dets = ['Deny', 'Type a Long String', 'Role Model']
-    for url, w in f.websites.iteritems():
-        print url, w.rule.__class__.__name__
-        if w.rule.__class__ == DeterOnceRule:
-            print '\tAlways block'
-        elif w.rule.__class__ == TimeToleranceRule:
-            print '\tUse time:', w.rule.allowed_duration
-            print '\tBreak time:', w.rule.block_duration
-        elif w.rule.__class__ == BlockSchedulingRule:
-            print '\tAllowed hours:', w.rule.allowed_hours
-        else:
-            print '\tUnknown rule:', w.rule.__class__
-        print '\tDeterrent:', dets[w.deterrent.type],
-        if w.deterrent.type == DET_TYPE_ROLES:
-            print '(%s)' % w.deterrent.role_model.name
-        else:
-            print
-
-    print '-' * 40
-    print 'ROLE MODELS'
-    for rm in f.role_models.itervalues():
-        print '%s (%s)' % (rm.name, rm.picture_path)
-        print '\t' + '\n\t'.join(rm.quotes)
