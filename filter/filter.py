@@ -177,6 +177,7 @@ class HostsFile(object):
   
   def save(self):
     self._write_hosts(self.hosts, self.path)
+    os.system("ipconfig /flushdns")
   
   def restore(self):
     fp = open(self.path, 'w')
