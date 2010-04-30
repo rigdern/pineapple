@@ -79,7 +79,7 @@ class ProjectConfig:
     Saves config file to filename specified in the "Project Name" field """
     def save_project(self):
         fileName = self.pcd.eProjName.get()
-        if len(fileName) > 1:
+        if len(fileName) > 1 and askyesno("Commit changes?", "Are you sure you want to commit changes to your project?"):
             outfile = open(PROJECT_DIR + fileName, 'wb')
             pickle.dump(self.mySites, outfile)
             outfile.close()
