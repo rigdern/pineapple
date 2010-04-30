@@ -10,6 +10,8 @@ DET_TYPE_EXPLAIN = 3
 ROLE_FILE_NAME="myRoles"
 
 def find_if(pred, seq):
+  """Returns the first element of *seq* for which the predicate *pred* returns
+  true. Returns None otherwise."""
   for x in seq:
     if pred(x):
       return x
