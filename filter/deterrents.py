@@ -1,8 +1,17 @@
-import BaseHTTPServer, hashlib, Image, ImageDraw, ImageFont, cStringIO, random, string, os
+import BaseHTTPServer
+import hashlib
+import Image
+import ImageDraw
+import ImageFont
+import cStringIO
+import random
+import string
+import os
 from string import Template
 
 # def render() is called to display the deterrent.
 # def undeter_requested() is called to see if the user can continue to the website requested.
+
 
 # Abstract class. Implemented by following deterrent classes.
 class AbstractDeterrent(object):
@@ -12,6 +21,7 @@ class AbstractDeterrent(object):
     def undeter_requested(self, request):
         raise NotImplementedError
 
+
 # Completely blocks a website with no other action available
 class DenyDeterrent(AbstractDeterrent):
     def render(self, request):
@@ -20,30 +30,31 @@ class DenyDeterrent(AbstractDeterrent):
     def undeter_requested(self, request):
         return self.render(request)
 
+
 # A random string is generated and turned into an image.
 # The user then has to type the string correctly to get
 # to the requested website.
 class StrChrDeterrent(AbstractDeterrent):
     def render(self, request):
         # Create a random 32 character string consisting of upper and lower case letters
-        s = ''.join([random.choice(string.lowercase+string.uppercase) for x in xrange(32)])
+        s = ''.join([random.choice(string.lowercase + string.uppercase) for x in xrange(32)])
         # Find the hash of the string
         s_hash = hashlib.sha1(s).hexdigest()
         # Load the font for the image
-        font=ImageFont.load_default()
+        font = ImageFont.load_default()
         # Find the width and height for the image
         text_width, text_height = font.getsize(s)
         # Create a blank image
-        img = Image.new("RGB", (text_width,text_height), "#FFFFFF")
+        img = Image.new("RGB", (text_width, text_height), "#FFFFFF")
         # Draw the text on the image
         draw = ImageDraw.Draw(img)
         draw.text((0, 0), s, fill=(0, 0, 0))
         # Save the image in the webroot
-        filename = s_hash+".JPEG"
+        filename = s_hash + ".JPEG"
         file_path = os.path.join(request.webroot, filename)
         img.save(file_path, "JPEG")
         # HTML to send to the browser, showing the string image and text field
-        content="""
+        content = """
         Type the following string in order to continue: <br>
         <img src="http://127.0.0.1/%s" />
         <br><br>
@@ -53,7 +64,7 @@ class StrChrDeterrent(AbstractDeterrent):
         <input type="hidden" name="host" value="%s"><br><br>
         <input type="submit" value="Submit" />
         </form>
-        """%(filename, request.path, s_hash, request.target_host)
+        """ % (filename, request.path, s_hash, request.target_host)
         return content
 
     def undeter_requested(self, request):
@@ -71,8 +82,9 @@ class StrChrDeterrent(AbstractDeterrent):
         ACCESS DENIED! <br>
         You have typed an incorrect string.<br>
         <a href="http://%s%s">Retry</a>
-        """%(request.target_host, request.path)
+        """ % (request.target_host, request.path)
         return content
+
 
 # A role model image and quote is displayed in order to get
 # the user back on track with their projects
@@ -85,11 +97,11 @@ class RoleModelDeterrent(AbstractDeterrent):
         image_path = os.path.basename(self.role_model.picture_path)
         # Pick a random quote from the quote list
         image_quotes = self.role_model.quotes
-        rand_num = random.randrange(0,len(image_quotes))
+        rand_num = random.randrange(0, len(image_quotes))
         selected_quote = image_quotes[rand_num]
         # Display the role model and random quote in the browser
         # and see if the user still wants to continue
-        content="""
+        content = """
         <img src="http://127.0.0.1/rolemodels/%s" /><br>
         <i>%s</i><br>
         &mdash; %s
@@ -100,7 +112,7 @@ class RoleModelDeterrent(AbstractDeterrent):
         <input type="submit" name="continuePage" value="Yes" />
         <input type="submit" name="continuePage" value="No" />
         </form>
-        """%(image_path, selected_quote, self.role_model.name, request.path, request.target_host)
+        """ % (image_path, selected_quote, self.role_model.name, request.path, request.target_host)
         return content
 
     def undeter_requested(self, request):
@@ -115,19 +127,20 @@ class RoleModelDeterrent(AbstractDeterrent):
             """
             return content
 
+
 # The user is presented with a text box asking them to
 # explain how the website helps them with their project.
 class BenefitDeterrent(AbstractDeterrent):
     def render(self, request):
         # HTML to display the text box so the user can explain
-        content="""
+        content = """
         <form action="http://127.0.0.1%s" method="post">
         How does this website benefit your project? <br>
         <textarea name="benefit_text" rows=7 cols=46></textarea> <br>
         <input type="hidden" name="host" value="%s">
         <input type="submit" value="Submit" />
         </form>
-        """%(request.path, request.target_host)
+        """ % (request.path, request.target_host)
         return content
 
     def undeter_requested(self, request):
@@ -141,8 +154,9 @@ class BenefitDeterrent(AbstractDeterrent):
             ACCESS DENIED! <br>
             Your reason is not good enough.<br>
             <a href="http://%s%s">Retry</a>
-            """%(request.target_host, request.path)
+            """ % (request.target_host, request.path)
             return content
+
 
 # Handles which deterrent needs to be called.
 class DeterrentFactory(object):

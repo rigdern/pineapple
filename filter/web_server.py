@@ -1,4 +1,8 @@
-import BaseHTTPServer, SimpleHTTPServer, cgi, os, sys
+import BaseHTTPServer
+import SimpleHTTPServer
+import cgi
+import os
+import sys
 from filter import Filter
 
 # Changes to the hosts file don't seem to be recoginzed right away. Maybe we
@@ -8,12 +12,15 @@ from filter import Filter
 
 WEBROOT = "webroot"
 
+
 class Request(object):
-    def __init__(self, webroot=None, path=None, post_data=None, target_host=None):
+    def __init__(self, webroot=None, path=None, post_data=None,
+        target_host=None):
         self.webroot = webroot
         self.path = path
         self.post = post_data
         self.target_host = target_host
+
 
 class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def do_HEAD(self):
@@ -45,7 +52,7 @@ class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                     self.send_ok("Malformed request: 'host' form parameter missing")
                     return
                 if ret == True:
-                    redirect_url = "http://%s%s"%(request.target_host, self.path)
+                    redirect_url = "http://%s%s" % (request.target_host, self.path)
                     self.send_redirect(redirect_url)
                 else:
                     self.send_ok(ret)
@@ -77,11 +84,12 @@ class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
     do_POST = do_GET = handle_request
 
+
 def main():
     global flter
 
     if len(sys.argv) != 2:
-        print "Usage: python %s <path-to-project>"%sys.argv[0]
+        print "Usage: python %s <path-to-project>" % sys.argv[0]
         sys.exit()
 
     flter = Filter(sys.argv[1])

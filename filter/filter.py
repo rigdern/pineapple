@@ -1,27 +1,33 @@
-import pickle, datetime, time, os, shutil
+import pickle
+import datetime
+import time
+import os
+import shutil
 from threading import Timer
 from deterrents import DeterrentFactory
 
-# Should be shared with configuration tool.
 DET_TYPE_DENY = 0
 DET_TYPE_TYPE = 1
 DET_TYPE_ROLES = 2
 DET_TYPE_EXPLAIN = 3
-ROLE_FILE_NAME="myRoles"
+ROLE_FILE_NAME = "myRoles"
+
 
 def find_if(pred, seq):
-    """Returns the first element of *seq* for which the predicate *pred* returns
-    true. Returns None otherwise."""
+    """Returns the first element of *seq* for which the predicate *pred*
+    returns true. Returns None otherwise."""
     for x in seq:
         if pred(x):
             return x
     return None
+
 
 class RoleModel(object):
     def __init__(self, params):
         self.name = params['Name']
         self.quotes = params['QuotesList']
         self.picture_path = params['ImagePath']
+
 
 class AbstractRule(object):
     def __init__(self, flter, address, deterrent, params):
@@ -42,11 +48,13 @@ class AbstractRule(object):
         re-enabling the deterrent."""
         pass
 
+
 class DeterOnceRule(AbstractRule):
     """Deter the user until he accepts the deterrent. Afterwards, allow access
     to the website."""
     def enable(self):
         self.filter.hook(self.address)
+
 
 class TimeToleranceRule(AbstractRule):
     """When a user accepts the deterrent, allow uninterrupted access to the
@@ -55,7 +63,7 @@ class TimeToleranceRule(AbstractRule):
     def __init__(self, flter, address, deterrent, params):
         AbstractRule.__init__(self, flter, address, deterrent, params)
         try:
-            self.allowed_duration = int(params['BreakLength'])*60
+            self.allowed_duration = int(params['BreakLength']) * 60
         except TypeError:
             self.allowed_duration = 1
         self.timer = None
@@ -76,6 +84,7 @@ class TimeToleranceRule(AbstractRule):
     def _hook_address(self):
         self.timer = None
         self.filter.hook(self.address)
+
 
 class BlockSchedulingRule(AbstractRule):
     """Allow uninterrupted access to the website during the allowed hours. For
@@ -134,11 +143,11 @@ class BlockSchedulingRule(AbstractRule):
 
         base = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # When's the next hour TODAY?
-        hour = find_if(pred, range(self._current_hour()+1, 24))
+        hour = find_if(pred, range(self._current_hour() + 1, 24))
         if hour is None:
             # Nothing today. When's the next hour TOMORROW?
             base += datetime.timedelta(days=1)
-            hour = find_if(pred, range(0, self._current_hour()+1))
+            hour = find_if(pred, range(0, self._current_hour() + 1))
 
         return time.mktime(base.replace(hour=hour).timetuple())
 
@@ -148,6 +157,7 @@ class BlockSchedulingRule(AbstractRule):
     def _next_deterred_hour(self):
         return self._next_hour(False)
 
+
 class RuleFactory:
     method_rule_map = [DeterOnceRule, TimeToleranceRule, BlockSchedulingRule]
 
@@ -156,10 +166,12 @@ class RuleFactory:
         klass = RuleFactory.method_rule_map[params['Method']]
         return klass(flter, address, deterrent, params)
 
+
 # XXX Path to hosts file for Windows shouldn't assume it'll be no the C drive.
 class HostsFile(object):
     UNIX_PATH = '/etc/hosts'
     WINDOWS_PATH = 'C:\\Windows\\System32\\Drivers\\etc\\hosts'
+
     def __init__(self):
         if hasattr(os, 'uname'):
             self.path = HostsFile.UNIX_PATH
@@ -203,13 +215,14 @@ class HostsFile(object):
         fp = open(path, 'w')
         for name, addrs in hosts.iteritems():
             for addr in addrs:
-                fp.write('%s\t%s\n'%(addr, name))
+                fp.write('%s\t%s\n' % (addr, name))
         fp.close()
 
     def _back_up_hosts_file(self, path):
         bkup_path = os.path.join(os.path.dirname(self.path), 'hosts-bkup')
         if not os.path.exists(bkup_path):
             shutil.copy(path, bkup_path)
+
 
 class Filter(object):
     def __init__(self, config_path):
@@ -239,7 +252,7 @@ class Filter(object):
         try:
             return self._html_wrap(self.rules[request.target_host].deterrent.render(request))
         except KeyError:
-            return "Host not supposed to be used with filter: %s"%request.target_host
+            return "Host not supposed to be used with filter: %s" % request.target_host
 
     def undeter_requested(self, request):
         try:
@@ -253,7 +266,7 @@ class Filter(object):
             else:
                 return self._html_wrap(ret)
         except KeyError:
-            return "Host not supposed to be used with filter: %s"%address
+            return "Host not supposed to be used with filter: %s" % address
 
     def start(self):
         [rule.enable() for rule in self.rules.itervalues()]
@@ -271,9 +284,9 @@ class Filter(object):
         self.hosts.save()
 
     def _html_wrap(self, body):
-        title="Pineapple Web Filter"
-        blocked="BLOCKED!"
-        content="""
+        title = "Pineapple Web Filter"
+        blocked = "BLOCKED!"
+        content = """
         <html><head><title>%s</title></head><body>
         <DIV ALIGN=CENTER>
         <h1>%s<br>%s</h1>
@@ -281,7 +294,7 @@ class Filter(object):
         </div>
         </body></html>
           """
-        return '%s'%(content%(title,title,blocked,body))
+        return '%s' % (content % (title, title, blocked, body))
 
 if __name__ == '__main__':
     f = Filter("configs/sampler")
@@ -299,12 +312,12 @@ if __name__ == '__main__':
             print '\tUnknown rule:', w.rule.__class__
         print '\tDeterrent:', dets[w.deterrent.type],
         if w.deterrent.type == DET_TYPE_ROLES:
-            print '(%s)'%w.deterrent.role_model.name
+            print '(%s)' % w.deterrent.role_model.name
         else:
             print
 
-    print '-'*40
+    print '-' * 40
     print 'ROLE MODELS'
     for rm in f.role_models.itervalues():
-        print '%s (%s)'%(rm.name, rm.picture_path)
+        print '%s (%s)' % (rm.name, rm.picture_path)
         print '\t' + '\n\t'.join(rm.quotes)
