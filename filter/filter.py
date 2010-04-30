@@ -1,10 +1,15 @@
+"""
+filter.py
+
+Defines a system for hooking web requests and connecting the request to the
+appropriate rule and deterrent.
+"""
+
 import pickle
-import datetime
-import time
 import os
 import shutil
-from threading import Timer
 from deterrents import DeterrentFactory
+from rules import RuleFactory
 
 DET_TYPE_DENY = 0
 DET_TYPE_TYPE = 1
@@ -29,154 +34,6 @@ class RoleModel(object):
         self.name = params['Name']
         self.quotes = params['QuotesList']
         self.picture_path = params['ImagePath']
-
-
-class AbstractRule(object):
-    """Describes the interface that must be implemented by filter rules."""
-    def __init__(self, flter, address, deterrent, params):
-        self.filter = flter
-        self.address = address
-        self.deterrent = deterrent
-
-    def enable(self):
-        """Called when the rule will begin taking effect. Initialize the state."""
-        pass
-
-    def disable(self):
-        """Called when the rule will no longer be considered. Clean up."""
-        pass
-
-    def undeterred(self):
-        """Called when the user has chosen to bypass the deterrent. Prepare for
-        re-enabling the deterrent."""
-        pass
-
-
-class DeterOnceRule(AbstractRule):
-    """Deter the user until he accepts the deterrent. Afterwards, allow access
-    to the website."""
-    def enable(self):
-        self.filter.hook(self.address)
-
-
-class TimeToleranceRule(AbstractRule):
-    """When a user accepts the deterrent, allow uninterrupted access to the
-    website for x minutes. After x minutes have elapsed, re-enable the
-    deterrent."""
-    def __init__(self, flter, address, deterrent, params):
-        AbstractRule.__init__(self, flter, address, deterrent, params)
-        try:
-            self.allowed_duration = int(params['BreakLength']) * 60
-        except TypeError:
-            self.allowed_duration = 1
-        self.timer = None
-
-    def enable(self):
-        self.filter.hook(self.address)
-
-    def disable(self):
-        if self.timer:
-            self.timer.cancel()
-            self.timer = None
-
-    def undeterred(self):
-        """Re-enable the deterrent after *allowed_duration* minutes."""
-        self.timer = Timer(self.allowed_duration, self._hook_address, [])
-        self.timer.start()
-
-    def _hook_address(self):
-        self.timer = None
-        self.filter.hook(self.address)
-
-
-class BlockSchedulingRule(AbstractRule):
-    """Allow uninterrupted access to the website during the allowed hours. For
-    all other hours, deter the user once in each hour."""
-    def __init__(self, flter, address, deterrent, params):
-        AbstractRule.__init__(self, flter, address, deterrent, params)
-        self.allowed_hours = [int(x) for x in params['AllowedTime']]
-
-    def enable(self):
-        if self._current_hour() in self.allowed_hours:
-            self._establish_timer(self._next_deterred_hour(), self._hook_address)
-        else:
-            self.filter.hook(self.address)
-            self._establish_timer(self._next_allowed_hour(), self._unhook_address)
-
-    def disable(self):
-        self._cancel_timer()
-
-    def undeterred(self):
-        self._cancel_timer()
-        self._establish_timer(self._next_deterred_hour(), self._hook_address)
-
-    def _hook_address(self):
-        self.filter.hook(self.address)
-        self._establish_timer(self._next_allowed_hour(), self._unhook_address)
-
-    def _unhook_address(self):
-        self.filter.unhook(self.address)
-        self._establish_timer(self._next_deterred_hour(), self._hook_address)
-
-    def _establish_timer(self, end_time, callback):
-        """Create and start a timer to call *callback* at *end_time*."""
-        # XXX What if now is more in the future than next_time by the time we get
-        # to the subtraction code? Race condition.
-        if end_time is not None:
-            self.timer = Timer(end_time - time.time(), callback)
-
-    def _cancel_timer(self):
-        if self.timer:
-            self.timer.cancel()
-            self.timer = None
-
-    def _current_hour(self):
-        """Return the current hour as an integer between 0 and 23"""
-        return datetime.datetime.now().hour
-
-    def _next_hour(self, allowed):
-        """If *allowed* is true, return the next allowed hour. If *allowed* is
-        false, return the next deterred hour. Return None if there is no such
-        next allowed/blocked hour."""
-        # If we're looking for an allowed hour, make sure at least one exists.
-        # If we're looking for a deterred hour, make sure at least one exists.
-        if allowed and len(self.allowed_hours) == 0 \
-          or (not allowed and len(self.allowed_hours) == 24):
-            return None
-
-        if allowed:
-            pred = lambda hour: hour in self.allowed_hours
-        else:
-            pred = lambda hour: hour not in self.allowed_hours
-
-        base = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        # When's the next hour TODAY?
-        hour = find_if(pred, range(self._current_hour() + 1, 24))
-        if hour is None:
-            # Nothing today. When's the next hour TOMORROW?
-            base += datetime.timedelta(days=1)
-            hour = find_if(pred, range(0, self._current_hour() + 1))
-
-        return time.mktime(base.replace(hour=hour).timetuple())
-
-    def _next_allowed_hour(self):
-        """Return the next allowed hour"""
-        return self._next_hour(True)
-
-    def _next_deterred_hour(self):
-        """Return the next deterred hour"""
-        return self._next_hour(False)
-
-
-class RuleFactory:
-    """Returns an instance of the appropriate Rule class given a rule type."""
-    method_rule_map = [DeterOnceRule, TimeToleranceRule, BlockSchedulingRule]
-
-    @staticmethod
-    def rule_for_dict(flter, address, deterrent, params):
-        klass = RuleFactory.method_rule_map[params['Method']]
-        return klass(flter, address, deterrent, params)
-
 
 # XXX Path to hosts file for Windows shouldn't assume it'll be no the C drive.
 class HostsFile(object):

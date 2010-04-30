@@ -1,3 +1,13 @@
+"""
+web_server.py
+
+Usage: python web_server.py <path-to-project>
+
+When run, starts the filter. Takes a path to a project configuration file
+as a command line parameter. When appropriate, serves static files from
+WEBROOT. In other situations, forwards intercepted requests to the filter.
+"""
+
 import BaseHTTPServer
 import SimpleHTTPServer
 import cgi
