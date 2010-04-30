@@ -1,0 +1,14 @@
+DEPENDENCIES
+============
+- PIL (Python Imaging Library) - http://www.pythonware.com/products/pil/
+
+STYLE GUIDE FOR CODE
+====================
+PEP 8 - http://www.python.org/dev/peps/pep-0008/
+
+RUNNING
+=======
+- Configuration Utility
+  python 'configuration tool/conf.py'
+- Filter
+  sudo python filter/web_server.py 'proj/Filter Test'
