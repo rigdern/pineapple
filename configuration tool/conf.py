@@ -31,10 +31,10 @@ class ProjectConfig:
         self.web_server_process = None
         self.project_window()
 
-    """ Called when user enters URL in site field and hits "Add Site" or
-    "Edit Site." Constructs object with all information about site policy
-    saves until commit takes place"""
     def add_site(self):
+        """ Called when user enters URL in site field and hits "Add Site" or
+        "Edit Site." Constructs object with all information about site policy
+        saves until commit takes place"""
         siteconfig = {}
         siteconfig['url'] = self.pcd.SiteStr.get()
         siteconfig['BlockConfig'] = {}
@@ -75,30 +75,30 @@ class ProjectConfig:
 
         self.pcd.clear_all_fields()
 
-    """ Called when user clicks "Commit Changes" from project config dialog
-    Saves config file to filename specified in the "Project Name" field """
     def save_project(self):
+        """ Called when user clicks "Commit Changes" from project config dialog
+        Saves config file to filename specified in the "Project Name" field """
         fileName = self.pcd.eProjName.get()
-        if len(fileName) > 1:
+        if len(fileName) > 1 and askyesno("Commit changes?", "Are you sure you want to commit changes to the project?"):
             outfile = open(PROJECT_DIR + fileName, 'wb')
             pickle.dump(self.mySites, outfile)
             outfile.close()
             self.list_projects()
 
-    """ Called when user clicks "Edit" from main project list menu
-    Open ProjectConfigDialog with values populated """
     def edit_project(self):
+        """ Called when user clicks "Edit" from main project list menu
+        Open ProjectConfigDialog with values populated """
         self.mySites = []
         self.pcd = ProjectConfigDialog(self)
         self.open_project()
 
-    """ Called when user clicks "Add" from main project list menu"""
     def new_project(self):
+        """ Called when user clicks "Add" from main project list menu"""
         self.mySites = []
         self.pcd = ProjectConfigDialog(self)
 
-    """ Called when user clicks "Delete" from main project list menu"""
     def remove_project(self):
+        """ Called when user clicks "Delete" from main project list menu"""
         selectedindex = self.lbProjects.curselection()
         if len(selectedindex) == 1:
             if askyesno("Delete Project?", "Are you sure you want to delete this project?"):
@@ -108,25 +108,25 @@ class ProjectConfig:
         else:
             showinfo("No project selected", "You must select a project before deleting")
 
-    """ Called when user clicks "Employ" from the main project list menu"""
     def employ_project(self):
+        """ Called when user clicks "Employ" from the main project list menu"""
         selectedindex = self.lbProjects.curselection()
         if len(selectedindex) == 1:
             if askyesno("Employ Project?", "Are you sure you want to begin filtering content?"):
                 filename = self.projects_list[int(selectedindex[0])]
                 self.web_server_process = Popen(['sudo', 'python', './filter/web_server.py', PROJECT_DIR + filename])
 
-    """ Called when user clicks "Terminate" from main project list menu"""
     def terminate_project(self):
+        """ Called when user clicks "Terminate" from main project list menu"""
         if (self.web_server_process != None):
             if askyesno("Quit?", "Are you sure you want to quit? You must restart your computer"):
                 showinfo("Project Terminated", "Your computer will now restart")
         else:
             showinfo("Filter not active", "The filter is not currently active")
 
-    """ Called when user chooses to edit an existing project. The project window is created then
-    open_project is called to populate the form fields"""
     def open_project(self):
+        """ Called when user chooses to edit an existing project. The project window is created then
+        open_project is called to populate the form fields"""
         pjname = self.projects_list[int(self.lbProjects.curselection()[0])]
         try:
             infile = open(PROJECT_DIR + pjname)
@@ -143,8 +143,8 @@ class ProjectConfig:
         except:
             showerror("Error opening project configuration", "Unable to open project configuration file")
 
-    """ Populates list of previously configured projects to be listed in main window  """
     def list_projects(self):
+        """ Populates list of previously configured projects to be listed in main window  """
         self.projects_list = []
         self.lbProjects.delete(0, END)
         if os.path.exists(PROJECT_DIR):
@@ -155,8 +155,8 @@ class ProjectConfig:
         else:
             os.makedirs(PROJECT_DIR)
 
-    """ Create main window with list of previously configured projects"""
     def project_window(self):
+        """ Create main window with list of previously configured projects"""
         self.projects_dialog = Tk()
         self.projects_dialog.title("Pineapple!")
 
